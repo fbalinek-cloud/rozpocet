@@ -122,3 +122,9 @@ do $$ begin
     alter publication supabase_realtime add table public.records;
   end if;
 end $$;
+
+-- Utažení oprávnění: anonymní (nepřihlášený) klíč k tabulkám nemá přístup vůbec
+revoke all on public.households, public.members, public.records from anon;
+revoke insert, update, delete, truncate, references, trigger on public.households from authenticated;
+revoke insert, update, truncate, references, trigger on public.members from authenticated;
+revoke delete, truncate, references, trigger on public.records from authenticated;

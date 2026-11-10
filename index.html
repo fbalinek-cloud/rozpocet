@@ -1,0 +1,1572 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rozpočet Balínkovi</title>
+<meta name="description" content="Společný rodinný rozpočet, šifrovaný přímo v telefonu.">
+<meta name="theme-color" content="#0E6B57">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rozpočet">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+/* Layout: jedna úzká sloupcová aplikace, nahoře měsíc, dole pevná navigace s pěti záložkami, plovoucí „+“; podsekce přes vodorovné čipy */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --surface-2:#E3E9E7; --ink:#13201D; --muted:#5C6B67; --line:#D5DDDA;
+  --accent:#0E6B57; --accent-ink:#FFFFFF; --accent-soft:#D3EAE3;
+  --out:#C2410C; --in:#0E7A4F; --warn:#B7791F; --warn-soft:#F6EAD3; --over:#C2362B; --over-soft:#F7DEDA;
+  --shadow:0 10px 30px -12px rgba(19,32,29,.25);
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1614; --surface:#18221F; --surface-2:#222E2A; --ink:#E6EEEB; --muted:#93A39E; --line:#2C3A36;
+  --accent:#4FC3A1; --accent-ink:#06221A; --accent-soft:#1D3A32;
+  --out:#F0875A; --in:#5BD39A; --warn:#E3B04B; --warn-soft:#3A2F17; --over:#F07167; --over-soft:#3D1F1C;
+  --shadow:0 10px 30px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1614; --surface:#18221F; --surface-2:#222E2A; --ink:#E6EEEB; --muted:#93A39E; --line:#2C3A36;
+  --accent:#4FC3A1; --accent-ink:#06221A; --accent-soft:#1D3A32;
+  --out:#F0875A; --in:#5BD39A; --warn:#E3B04B; --warn-soft:#3A2F17; --over:#F07167; --over-soft:#3D1F1C;
+  --shadow:0 10px 30px -12px rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.num{font-variant-numeric:tabular-nums}
+
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.wrap{padding-block:0 130px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 8px}
+header.top .in{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.05rem;letter-spacing:-.01em;display:grid;line-height:1.15}
+.brand small{font-family:var(--f-body);font-weight:500;font-size:.75rem;color:var(--muted)}
+.month{display:flex;align-items:center;gap:4px}
+.month button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.month span{min-width:112px;text-align:center;font-weight:600}
+
+.subnav{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none;margin-bottom:2px}
+.subnav::-webkit-scrollbar{display:none}
+.subnav button{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 13px;font-size:.86rem;font-weight:500}
+.subnav button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.banner{background:var(--accent-soft);border-radius:12px;padding:10px 14px;font-size:.86rem;display:flex;gap:10px;align-items:center;justify-content:space-between;margin-block:4px 12px}
+.banner button{border:0;background:transparent;font-weight:600;color:var(--accent);padding:4px;white-space:nowrap}
+
+.hero{background:var(--ink);color:var(--bg);border-radius:22px;padding:20px;display:grid;gap:14px}
+.hero .lab{font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7}
+.hero .big{font-family:var(--f-display);font-weight:700;font-size:2.5rem;line-height:1;letter-spacing:-.03em}
+.hero .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hero .row.three{grid-template-columns:repeat(3,1fr)}
+.hero .row div{display:grid;gap:2px;min-width:0}
+.hero .row b{font-family:var(--f-display);font-size:1.12rem;font-weight:600}
+.hero small{opacity:.75;font-size:.8rem}
+.hero .perday{background:rgba(127,127,127,.18);border-radius:14px;padding:10px 12px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.hero .perday b{font-family:var(--f-display);font-size:1.3rem}
+
+section.card{background:var(--surface);border-radius:18px;padding:16px;margin-top:14px;border:1px solid var(--line)}
+section.card:first-child{margin-top:4px}
+h2{font-family:var(--f-display);font-size:1.05rem;font-weight:600;margin:0 0 12px;text-wrap:balance;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+h2 small{font-family:var(--f-body);font-weight:500;color:var(--muted);font-size:.8rem}
+.p{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+.p:last-child{margin-bottom:0}
+
+.alerts{display:grid;gap:8px;margin-top:14px}
+.alert{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:11px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:.9rem}
+.alert .ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.alert.over .ico{background:var(--over-soft);color:var(--over)}
+.alert.warn .ico{background:var(--warn-soft);color:var(--warn)}
+.alert.info .ico{background:var(--accent-soft);color:var(--accent)}
+.alert b{display:block}
+.alert span{color:var(--muted)}
+button.lnk{border:0;background:none;color:var(--accent);font-weight:600;padding:2px 0;margin-top:2px}
+
+.feed{background:var(--accent-soft);border-radius:18px;padding:14px 16px;margin-top:4px}
+.feed h2{margin-bottom:8px}
+.feed ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.feed li{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+.feed li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feed .btn{margin-top:10px}
+
+.cats{display:grid;gap:12px}
+.cat{display:grid;gap:5px}
+.cat .t{display:flex;justify-content:space-between;gap:8px;font-size:.93rem}
+.cat .t span:first-child{display:flex;align-items:center;gap:8px;min-width:0}
+.dot{width:10px;height:10px;border-radius:3px;flex:none;display:inline-block}
+.bar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px}
+.cat .lim{font-size:.78rem;color:var(--muted)}
+.cat.warn .lim{color:var(--warn)} .cat.over .lim{color:var(--over);font-weight:600}
+
+.donut{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center}
+.donut svg{width:150px;height:150px;max-width:100%}
+.donut .lg{display:grid;gap:6px;font-size:.85rem;min-width:0}
+.donut .lg div{display:flex;justify-content:space-between;gap:8px}
+.donut .lg span:first-child{display:flex;gap:7px;align-items:center;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+@media (max-width:380px){.donut{grid-template-columns:1fr;justify-items:center}.donut .lg{width:100%}}
+.chart-ink{fill:var(--ink)} .chart-muted{fill:var(--muted)}
+.grid-l{stroke:var(--line)}
+
+.stack{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--surface-2)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;font-size:.85rem}
+.legend span{display:flex;align-items:center;gap:6px}
+
+.trend{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end}
+.trend .col{display:grid;grid-template-rows:110px auto auto;gap:4px}
+.trend .bars{display:flex;gap:3px;align-items:flex-end;justify-content:center;height:110px}
+.trend .bars i{width:40%;max-width:14px;border-radius:4px 4px 0 0;min-height:2px}
+.trend .m{font-size:.72rem;color:var(--muted);text-align:center}
+.trend .net{font-size:.68rem;text-align:center;font-weight:600}
+.trend .col.cur .m{color:var(--ink);font-weight:700}
+
+.list{display:grid;gap:4px}
+.day{font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 4px 4px;display:flex;justify-content:space-between}
+.tx{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:left;width:100%}
+.tx .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:.78rem;color:#fff}
+.tx .mid{min-width:0}
+.tx .mid b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .mid small{color:var(--muted);font-size:.8rem;display:block}
+.tx .mid em{font-style:normal;font-size:.8rem;color:var(--ink);opacity:.8;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .amt{font-family:var(--f-display);font-weight:600;font-size:1.02rem;white-space:nowrap;text-align:right}
+.tx .amt small{display:block;font-family:var(--f-body);font-weight:500;font-size:.72rem;color:var(--muted)}
+.amt.o{color:var(--ink)} .amt.i{color:var(--in)} .amt.s{color:var(--muted)}
+.new-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle}
+.tag{display:inline-block;font-size:.72rem;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 6px;margin-right:4px}
+
+.filters{display:grid;gap:10px;margin-top:4px}
+.search{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px;width:100%}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.frow select{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;width:100%;min-width:0}
+.sum-line{display:flex;justify-content:space-between;font-size:.86rem;color:var(--muted);padding:8px 4px 0;gap:8px}
+
+.empty{text-align:center;padding:36px 16px;display:grid;gap:12px;justify-items:center}
+.empty h3{font-family:var(--f-display);font-size:1.3rem;margin:0}
+.empty p{margin:0;color:var(--muted);max-width:34ch}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.danger{background:transparent;color:var(--over);border:1px solid var(--over)}
+.btn.wide{width:100%}
+.btn.sm{padding:8px 12px;font-size:.86rem}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btnrow .btn{flex:1}
+
+.goal{display:grid;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0;padding-top:0}
+.goal .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.goal .t b{font-family:var(--f-display);font-size:1.05rem}
+.goal .hint{font-size:.83rem;color:var(--muted)}
+.goal .hint.warn{color:var(--warn)}
+.goal .acts{display:flex;gap:8px}
+.goal .acts button{flex:1;padding:9px;font-size:.88rem}
+
+.kv{display:grid;gap:0}
+.kv div{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:.93rem}
+.kv div:first-child{border-top:0}
+.kv div.total{font-weight:700;font-family:var(--f-display);font-size:1.05rem;border-top:2px solid var(--ink)}
+.kv span:first-child{display:flex;gap:8px;align-items:center;min-width:0}
+
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:2px;min-width:0}
+.tile small{color:var(--muted);font-size:.74rem}
+.tile b{font-family:var(--f-display);font-size:1.05rem}
+@media (max-width:360px){.tiles{grid-template-columns:1fr 1fr}}
+
+.story{display:grid;gap:10px}
+.story p{margin:0;font-size:.95rem}
+.story b{font-family:var(--f-display)}
+
+.field{display:grid;gap:6px;margin-bottom:14px}
+.field label,.lbl{font-size:.8rem;color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;width:100%;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.limrow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.limrow:first-of-type{border-top:0}
+.limrow span{display:flex;gap:8px;align-items:center;min-width:0}
+.limrow input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;text-align:right;width:100%}
+.limrow small{display:block;color:var(--muted);font-size:.74rem}
+.checkrow{display:flex;gap:10px;align-items:center;margin:-4px 0 14px;font-size:.92rem}
+.checkrow input{width:20px;height:20px;accent-color:var(--accent)}
+
+.imp{display:grid;gap:6px;max-height:340px;overflow-y:auto;margin:10px 0}
+.imp label{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.88rem}
+.imp label small{display:block;color:var(--muted);font-size:.76rem}
+.imp input{width:18px;height:18px;accent-color:var(--accent)}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs button{border:0;background:transparent;padding:10px 2px 12px;display:grid;justify-items:center;gap:3px;font-size:.72rem;color:var(--muted);position:relative}
+nav.tabs button svg{width:22px;height:22px}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+nav.tabs .badge{position:absolute;top:5px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--over);color:#fff;font-size:.68rem;font-weight:700;display:grid;place-items:center;padding:0 5px}
+.fab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:7;width:58px;height:58px;border-radius:18px;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:var(--shadow);display:grid;place-items:center}
+.fab svg{width:26px;height:26px}
+
+.sheet-wrap{position:fixed;inset:0;z-index:20;background:rgba(10,16,14,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:24px 24px 0 0;max-height:92%;overflow-y:auto;padding-block:10px calc(18px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.sheet .grip{width:40px;height:4px;border-radius:9px;background:var(--line);margin:4px auto 12px}
+.sheet h3{font-family:var(--f-display);font-size:1.25rem;margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet h3 button{border:0;background:var(--surface-2);border-radius:50%;width:34px;height:34px;flex:none}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--surface-2);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg.three{grid-template-columns:repeat(3,1fr)}
+.seg button{border:0;background:transparent;border-radius:9px;padding:9px 4px;font-weight:600;color:var(--muted);font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.amount-in{display:flex;align-items:baseline;gap:8px;border-bottom:2px solid var(--accent);margin-bottom:16px;padding-bottom:4px}
+.amount-in input{border:0;background:transparent;font-family:var(--f-display);font-weight:700;font-size:2.4rem;width:100%;min-width:0;outline:none;letter-spacing:-.02em}
+.amount-in span{font-family:var(--f-display);font-size:1.2rem;color:var(--muted);white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 12px;font-size:.86rem;display:flex;gap:7px;align-items:center}
+.chips button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.sugg{display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px}
+.sugg button{border:0;background:var(--surface-2);border-radius:99px;padding:5px 10px;font-size:.8rem}
+.smart{font-size:.8rem;color:var(--accent);margin:-8px 0 12px;min-height:1em}
+.receipt{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--surface);border:1px dashed var(--accent);border-radius:14px;padding:10px 12px;margin-bottom:14px;font-size:.88rem}
+.sheet .foot{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.sheet .foot .btn{flex:1}
+.confirm{background:var(--surface);border:1px solid var(--over);border-radius:12px;padding:12px;margin-top:10px;display:grid;gap:10px}
+.rc-items{display:grid;gap:6px;margin:10px 0 14px}
+.rc-item{display:grid;grid-template-columns:1fr 88px 34px;gap:6px 8px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.rc-item.learned{border-color:var(--accent)}
+.rc-item .nm{grid-column:1/-1;font-size:.9rem;font-weight:500;min-width:0;overflow-wrap:anywhere;display:flex;justify-content:space-between;gap:8px}
+.rc-item .nm small{color:var(--accent);font-weight:600;font-size:.72rem;white-space:nowrap}
+.rc-item select,.rc-item input{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 8px;min-width:0;width:100%;font-size:.86rem}
+.rc-item input{text-align:right}
+.rc-item button{border:0;background:var(--surface-2);border-radius:8px;height:34px}
+.rc-sum{display:grid;gap:4px;margin-top:8px}
+.rc-sum div{display:flex;justify-content:space-between;gap:8px;font-size:.9rem}
+.rc-sum span:first-child{display:flex;gap:7px;align-items:center}
+ol.steps{margin:0;padding-left:20px;display:grid;gap:4px;font-size:.9rem}
+.whoami{display:grid;gap:10px}
+.whoami .btn{padding:16px;font-size:1.05rem}
+
+.lock{position:fixed;inset:0;z-index:40;background:var(--bg);display:grid;place-items:center;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.lock .box{width:100%;max-width:340px;display:grid;gap:14px;text-align:center}
+.lock h1{font-family:var(--f-display);font-size:1.6rem;margin:0}
+.lock input{font-family:var(--f-display);font-size:2rem;text-align:center;letter-spacing:.4em;border:0;border-bottom:2px solid var(--accent);background:transparent;padding:8px;width:100%;outline:none}
+.lock .err{color:var(--over);font-weight:600;min-height:1.3em;font-size:.9rem}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;z-index:50;font-size:.9rem;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.mt{margin-top:10px}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px;font-size:.9rem}
+.sim-out{display:grid;gap:8px;margin-top:6px}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.4}}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap in">
+  <div class="brand">Rozpočet Balínkovi<small id="meLabel">náhled</small></div>
+  <div class="month">
+    <button id="prevM" aria-label="Předchozí měsíc">‹</button>
+    <span id="monthLabel" class="num">—</span>
+    <button id="nextM" aria-label="Další měsíc">›</button>
+  </div>
+</div></header>
+
+<main class="wrap" id="main">
+  <div class="empty"><p class="muted">Načítám rozpočet…</p></div>
+</main>
+
+<button class="fab" id="fab" aria-label="Přidat pohyb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<nav class="tabs"><div class="in">
+  <button data-tab="prehled" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>Přehled<span class="badge" id="badge" hidden></span></button>
+  <button data-tab="pohyby"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Pohyby</button>
+  <button data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Plán</button>
+  <button data-tab="fixy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4M8 14h3M8 17h6"/></svg>Fixy</button>
+  <button data-tab="vice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Více</button>
+</div></nav>
+
+<div id="sheetRoot"></div>
+<div id="lockRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+/* ================= katalogy ================= */
+const EXP = [
+  {id:'bydleni',n:'Bydlení a energie',c:'#4F6BED',k:'BY'},
+  {id:'jidlo',n:'Jídlo a potraviny',c:'#2F9E6E',k:'JÍ'},
+  {id:'drogerie',n:'Drogerie a hygiena',c:'#5BA4CF',k:'DR'},
+  {id:'restaurace',n:'Restaurace a kavárny',c:'#D9822B',k:'RE'},
+  {id:'doprava',n:'Doprava a auto',c:'#6B7C93',k:'DO'},
+  {id:'psi',n:'Psi',c:'#A86B3C',k:'PS'},
+  {id:'zdravi',n:'Zdraví a péče',c:'#D1497A',k:'ZD'},
+  {id:'sport',n:'Sport a fitko',c:'#E0703A',k:'SP'},
+  {id:'pojisteni',n:'Pojištění',c:'#5E7FA3',k:'PO'},
+  {id:'domacnost',n:'Domácnost',c:'#8C6BD6',k:'DM'},
+  {id:'obleceni',n:'Oblečení',c:'#C0568F',k:'OB'},
+  {id:'predplatne',n:'Předplatné a telefon',c:'#3C8DB0',k:'PŘ'},
+  {id:'cestovani',n:'Cestování',c:'#1F9AA8',k:'CE'},
+  {id:'darky',n:'Dárky a dary',c:'#C9A227',k:'DA'},
+  {id:'ostatni',n:'Ostatní',c:'#8A938F',k:'OS'}
+];
+const INC = [
+  {id:'vyplata',n:'Výplata',c:'#0E7A4F',k:'VÝ'},
+  {id:'vedlejsi',n:'Vedlejší příjem',c:'#3C9D6B',k:'VE'},
+  {id:'prijem-ostatni',n:'Ostatní příjem',c:'#6AA884',k:'OP'}
+];
+const CAT = {}; [...EXP,...INC].forEach(c=>CAT[c.id]=c);
+CAT.vyrovnani={id:'vyrovnani',n:'Vyrovnání',c:'#7A8580',k:'⇄'};
+CAT.prevod={id:'prevod',n:'Převod mezi účty',c:'#7A8580',k:'⇆'};
+const KEYWORDS = {
+  jidlo:['lidl','albert','billa','kaufland','tesco','penny','globus','rohlík','rohlik','košík','kosik','potraviny','pekárna','řeznictví','nákup','nakup'],
+  drogerie:['dm drogerie','rossmann','teta drogerie','drogerie','kosmetika','šampon','sampon','prací','praci'],
+  restaurace:['restaurace','kavárna','kavarna','bistro','pizza','burger','oběd','obed','večeře','vecere','starbucks','costa','wolt','bolt food','foodora','damejidlo','kebab','sushi'],
+  doprava:['shell','omv','benzina','mol','orlen','tank','benzín','benzin','nafta','parkov','dálnič','dalnic','čd','regiojet','leo express','dpo','jízdenk','uber','bolt','servis','pneu','stk'],
+  psi:['zverimex','granule','super zoo','superzoo','veterin','krmivo','pes','psi','zoo'],
+  zdravi:['lékárna','lekarna','dr.max','dr. max','benu','lékař','lekar','zubař','zubar','optik','kosmetik','kadeřn','kadern','epilace'],
+  sport:['fitko','fitness','gym','posilovna','decathlon','sportisimo','hervis','bazén','bazen','permanentk'],
+  domacnost:['ikea','hornbach','obi','bauhaus','jysk','mountfield','datart','alza','mall'],
+  obleceni:['zara','h&m','reserved','lindex','about you','zalando','deichmann','bata','baťa','primark','oblečení','obleceni'],
+  predplatne:['netflix','spotify','icloud','apple','oneplay','hbo','max','disney','youtube','chatgpt','openai','claude','o2','t-mobile','vodafone','tarif','internet'],
+  cestovani:['booking','airbnb','letenk','ryanair','wizz','smartwings','hotel','dovolená','dovolena','chata'],
+  darky:['dárek','darek','narozeniny','vánoce','vanoce','svatba','dar ','dary','sbírka']
+};
+const WHO_COL = {a:'#4F6BED', b:'#D1497A', spol:'#2F9E6E'};
+const ACC_KIND = {ucet:'Běžný účet',sporeni:'Spoření',investice:'Investice',dluh:'Dluh / úvěr'};
+const MONTHS = ['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec'];
+const MGEN2 = ['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+const MLOC = ['lednu','únoru','březnu','dubnu','květnu','červnu','červenci','srpnu','září','říjnu','listopadu','prosinci'];
+const MSHORT = ['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro'];
+const DAYS = ['neděle','pondělí','úterý','středa','čtvrtek','pátek','sobota'];
+
+/* ================= utility ================= */
+const fmt = new Intl.NumberFormat('cs-CZ',{maximumFractionDigits:0});
+const kc = n => (n<0?'−':'')+fmt.format(Math.abs(Math.round(n))) + ' Kč';
+const tis = n => Math.abs(n)>=1000 ? (n<0?'−':'')+fmt.format(Math.round(Math.abs(n)/100)/10)+' tis.' : fmt.format(Math.round(n));
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,'0');
+const today = () => { const d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); };
+const mkey = d => d.slice(0,7);
+const shiftM = (k,n) => { let [y,m]=k.split('-').map(Number); m+=n; while(m<1){m+=12;y--} while(m>12){m-=12;y++} return y+'-'+pad(m); };
+const daysIn = k => { const [y,m]=k.split('-').map(Number); return new Date(y,m,0).getDate(); };
+const monthsBetween = (a,b) => { const [y1,m1]=a.split('-').map(Number),[y2,m2]=b.split('-').map(Number); return (y2-y1)*12+(m2-m1); };
+const parseAmt = v => { const n = parseFloat(String(v).replace(/\s| /g,'').replace(',','.')); return isFinite(n)?n:NaN; };
+const mi = k => +k.split('-')[1]-1;
+const mName = k => MONTHS[mi(k)];
+const mGen = k => MGEN2[mi(k)];
+const mLoc = k => MLOC[mi(k)];
+const pl = (n,one,few,many) => n===1?one:(n>=2&&n<=4)?few:many;
+const uid = p => p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const ls = { get(k){ try{return localStorage.getItem(k)}catch(e){return null} }, set(k,v){ try{localStorage.setItem(k,v)}catch(e){} }, del(k){ try{localStorage.removeItem(k)}catch(e){} } };
+const fem = n => /a$/i.test(n||'');
+const daysUntil = d => Math.round((new Date(d+'T12:00')-new Date(today()+'T12:00'))/86400000);
+
+/* ================= stav ================= */
+const S = {
+  tab:'prehled', sub:{plan:'rozdeleni', vice:'shrnuti'}, month:mkey(today()), sumMonth:shiftM(mkey(today()),-1),
+  D:null, me:null, key:null, token:null, hh:null, uid:null, demo:false, onboard:false, sampleOk:false, imp:null,
+  sync:{state:'local',pending:0,last:null,err:'',live:false},
+  filter:{q:'', type:'vse', cat:'', who:'', acc:''}
+};
+const D = () => S.D;
+const names = () => ({a:D().settings.nameA||'Filip', b:D().settings.nameB||'Baruška', spol:'Společné'});
+const other = () => S.me==='a'?'b':S.me==='b'?'a':null;
+
+/* ================= ukázková data ================= */
+function seedData(){
+  const m=mkey(today()), now=Date.now(), DAY=86400000;
+  const tx=[]; const r=(mon,d,amount,type,cat,who,note,extra)=>{ const t={id:uid('t'),date:mon+'-'+pad(Math.min(d,daysIn(mon))),amount,type,cat,who,note,by:(extra&&extra.by)||(who==='spol'?'a':who),createdAt:now-DAY*40,changedAt:now-DAY*40,...(extra||{})}; if(t.date<=today()) tx.push(t); return t; };
+  for(let i=5;i>=0;i--){
+    const mon=shiftM(m,-i);
+    r(mon,1,47500+(i%2)*1500,'prijem','vyplata','a','Výplata BE-LIGHT');
+    r(mon,1,35800,'prijem','vyplata','b','Výplata');
+    if(i%2===0) r(mon,8,3800,'prijem','vedlejsi','a','Zakázka OSVČ');
+    r(mon,3,16100,'vydaj','bydleni','spol','Nájem',{fixedId:'f1'});
+    r(mon,3,390,'vydaj','bydleni','spol','Internet',{fixedId:'f2'});
+    r(mon,4,299,'vydaj','predplatne','spol','Spotify',{fixedId:'f3',amount:i>1?269:299});
+    r(mon,5,596,'vydaj','sport','a','Fitko',{fixedId:'f5'});
+    r(mon,4,2380+i*90,'vydaj','jidlo','b','Kaufland');
+    r(mon,6,1650+(5-i)*120,'vydaj','psi','a','Granule Zverimex');
+    r(mon,7,890,'vydaj','restaurace','a','Oběd s klientem');
+    r(mon,9,1890,'vydaj','jidlo','spol','Lidl',{by:'b'});
+    r(mon,11,1400+i*60,'vydaj','doprava','a','Shell');
+    r(mon,14,1240,'vydaj','restaurace','b','Večeře',{shared:true,tags:i===0?['výročí']:[]});
+    r(mon,17,2650,'vydaj','jidlo','a','Albert');
+    r(mon,20,780,'vydaj','zdravi','b','Lékárna Dr.Max');
+    r(mon,22,1350,'vydaj','jidlo','b','Rohlík',{shared:true});
+    r(mon,25,1100,'vydaj','restaurace','a','Kavárna a dort',{shared:true});
+  }
+  // akce se štítkem
+  const p2=shiftM(m,-2);
+  r(p2,12,5400,'vydaj','cestovani','spol','Chata Beskydy',{tags:['beskydy']});
+  r(p2,13,1680,'vydaj','restaurace','a','Večeře na horách',{tags:['beskydy'],shared:true});
+  r(p2,13,950,'vydaj','doprava','a','Benzín',{tags:['beskydy']});
+  // čerstvé zápisy pro ukázku novinek
+  const d=new Date().getDate();
+  r(m,d,1250,'vydaj','jidlo','b','Nákup Lidl',{by:'b',createdAt:now-3600000,changedAt:now-3600000,comment:'Koupila jsem i granule do zásoby'});
+  r(m,d,420,'vydaj','restaurace','a','Kafe s Ondrou',{by:'a',createdAt:now-7200000,changedAt:now-7200000});
+  const lastPrev=shiftM(m,-1)+'-'+pad(daysIn(shiftM(m,-1)));
+  const tr=(mon,dd,amount,from,to,note,extra)=>{ const t={id:uid('p'),type:'prevod',cat:'prevod',who:'spol',date:mon+'-'+pad(Math.min(dd,daysIn(mon))),amount,from,to,note,by:'a',createdAt:now-DAY*40,changedAt:now-DAY*40,...(extra||{})}; if(t.date<=today()) tx.push(t); };
+  const rbShops=[['Pekárna',89,'jidlo'],['Kavárna',145,'restaurace'],['Trafika',120,'ostatni'],['Parkování',60,'doprava'],['Lékárna',210,'zdravi'],['Pekárna',76,'jidlo'],['Zverimex',189,'psi'],['Kavárna',98,'restaurace'],['Drogerie Teta',164,'drogerie'],['Pekárna',54,'jidlo'],['Benzín',650,'doprava']];
+  for(let i=5;i>=0;i--){ const mon=shiftM(m,-i);
+    tr(mon,2,5000,'a4','a3','Na platby kartou z RB');
+    tr(mon,5,2336,'a1','a2','Pojištění odkládané',{fixedId:'f4'});
+    [2,4,6,8,11,13,15,18,21,24,27].forEach((dd,j)=>{ const [n,a,c]=rbShops[j]; r(mon,dd,a,'vydaj',c,j%2?'b':'a',n,{account:'a3'}); });
+  }
+  const rcItems=[['Mléko polotučné 1 l, 2 ks',45.8,'jidlo'],['Chléb kmínový',39.9,'jidlo'],['Kuřecí prsa 500 g',129.9,'jidlo'],['Banány 1,2 kg',41.88,'jidlo'],['Rajčata cherry',49.9,'jidlo'],['Eidam 30 %',159.9,'jidlo'],['Pivo Radegast, 6 ks',119.4,'jidlo'],
+    ['Jar na nádobí 900 ml',79.9,'drogerie'],['Toaletní papír 8 rolí',109.9,'drogerie'],['Zubní pasta Colgate',49.9,'drogerie'],['Šampon Head & Shoulders',129.9,'drogerie'],['Pamlsky pro psy',89.9,'psi'],['Baterie AA, 4 ks',99.9,'domacnost']];
+  const rc={id:'r1',store:'Kaufland',date:m+'-'+pad(Math.max(1,d-1)),who:'b',by:'b',createdAt:now-DAY,items:rcItems.map(([name,price,cat])=>({name,price,cat,ai:cat}))};
+  rc.total=Math.round(rc.items.reduce((a,i)=>a+i.price,0)*100)/100;
+  rc.account='a1';
+  receiptTxs(rc).forEach(t=>{ t.createdAt=t.changedAt=now-DAY; tx.push(t); });
+  tx.forEach(t=>{ if((t.type==='vydaj'||t.type==='prijem')&&!t.account) t.account='a1'; });
+  return {
+    v:3, tx, receipts:[rc], itemCats:{},
+    fixed:[
+      {id:'f1',name:'Nájem',amount:16100,cat:'bydleni',who:'spol',order:1,day:3},
+      {id:'f2',name:'Internet',amount:390,cat:'bydleni',who:'spol',order:2,day:3},
+      {id:'f3',name:'Spotify',amount:299,cat:'predplatne',who:'spol',order:3,day:4,priceHistory:[{d:shiftM(m,-1)+'-01',from:269,to:299}]},
+      {id:'f4',name:'Pojištění odkládané',amount:2336,cat:'pojisteni',who:'spol',order:4,day:5,account:'a1',toAccount:'a2'},
+      {id:'f5',name:'Fitko',amount:596,cat:'sport',who:'a',order:5,day:5},
+      {id:'f6',name:'Telefon',amount:449,cat:'predplatne',who:'b',order:6,day:Math.min(28,d+1)}
+    ],
+    goals:[{id:'g1',name:'Rekonstrukce bytu',target:300000,saved:84000,deadline:shiftM(m,18),createdAt:1},{id:'g2',name:'Rezerva na 3 měsíce',target:120000,saved:61000,createdAt:2}],
+    sinking:[{id:'s1',name:'Povinné ručení a havarijní',amount:9800,due:shiftM(m,5),saved:6500,account:'a2'},{id:'s3',name:'Pojištění domácnosti',amount:4200,due:shiftM(m,3),saved:3100,account:'a2'},{id:'s2',name:'Vánoční dárky',amount:12000,due:shiftM(m,1)+'',saved:4000}],
+    accounts:[
+      {id:'a1',name:'Fio běžný',kind:'ucet',bank:'Fio',history:[{d:shiftM(m,-5)+'-28',v:31000},{d:shiftM(m,-3)+'-28',v:35500},{d:lastPrev,v:38200}]},
+      {id:'a2',name:'Fio spořicí (pojištění)',kind:'sporeni',bank:'Fio',purpose:'Odkládáme na pojištění placená během roku',history:[{d:shiftM(m,-5)+'-28',v:6000},{d:shiftM(m,-3)+'-28',v:10600},{d:lastPrev,v:14600}]},
+      {id:'a3',name:'RB běžný',kind:'ucet',bank:'RB',history:[{d:shiftM(m,-5)+'-28',v:4100},{d:shiftM(m,-3)+'-28',v:5300},{d:lastPrev,v:6200}]},
+      {id:'a4',name:'RB spořicí',kind:'sporeni',bank:'RB',rate:4,cond:{account:'a3',min:10,transfers:false},history:[{d:shiftM(m,-5)+'-28',v:150000},{d:shiftM(m,-3)+'-28',v:168000},{d:lastPrev,v:185000}]}
+    ],
+    settings:{nameA:'Filip',nameB:'Baruška',limits:{jidlo:9000,restaurace:3000,psi:2500,doprava:2500,zdravi:1500,obleceni:1500,domacnost:1500}},
+    lastSeen: now-DAY*2
+  };
+}
+
+/* ================= šifrování (AES-GCM, klíč z PINu přes PBKDF2) ================= */
+const TE=new TextEncoder(), TD=new TextDecoder();
+const b64 = buf => { const u=new Uint8Array(buf); let s=''; for(let i=0;i<u.length;i+=8192) s+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(s); };
+const ub64 = s => Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pin,salt){ const base=await crypto.subtle.importKey('raw',TE.encode(pin),'PBKDF2',false,['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']); }
+async function encObj(key,obj){ const iv=crypto.getRandomValues(new Uint8Array(12)); const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,TE.encode(JSON.stringify(obj))); return {iv:b64(iv),ct:b64(ct)}; }
+async function decObj(key,o){ const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(o.iv)},key,ub64(o.ct)); return JSON.parse(TD.decode(pt)); }
+
+/* ================= úložiště + synchronizace (Supabase, šifrování v telefonu) ================= */
+const CFG = window.RB_CONFIG||{};
+const KINDS=['tx','fixed','goals','sinking','accounts','receipts'], METAS=['settings','itemCats'];
+let sb=null, saveT, pushing=false, channel=null, synced={}, lastSync=null;
+const pendingQ=new Map();
+const emptyData=(nA,nB)=>({v:3,tx:[],fixed:[],goals:[],sinking:[],accounts:[],receipts:[],itemCats:{},settings:{nameA:nA||'Filip',nameB:nB||'Baruška',limits:{}},lastSeen:Date.now()});
+function normalizeD(d){ d=d||{}; KINDS.forEach(k=>d[k]=Array.isArray(d[k])?d[k]:[]); d.itemCats=d.itemCats||{}; d.settings=d.settings||{}; d.settings.nameA=d.settings.nameA||'Filip'; d.settings.nameB=d.settings.nameB||'Baruška'; d.settings.limits=d.settings.limits||{}; d.v=3; return d; }
+
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('rozpocet',1); r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbGet(k){ try{ const db=await idb(); return await new Promise((res,rej)=>{ const q=db.transaction('kv').objectStore('kv').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }catch(e){ return null; } }
+async function idbSet(k,v){ const db=await idb(); return new Promise((res,rej)=>{ const t=db.transaction('kv','readwrite'); t.objectStore('kv').put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function idbClear(){ try{ const db=await idb(); await new Promise(res=>{ const t=db.transaction('kv','readwrite'); t.objectStore('kv').clear(); t.oncomplete=res; t.onerror=res; }); }catch(e){} }
+
+async function deriveHH(password,saltB64){ // 512 bitů: prvních 256 = šifrovací klíč (zůstává v telefonu), dalších 256 = přístupový token
+  const base=await crypto.subtle.importKey('raw',TE.encode(password.normalize('NFC')),'PBKDF2',false,['deriveBits']);
+  const bits=new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:ub64(saltB64),iterations:310000,hash:'SHA-256'},base,512));
+  const key=await crypto.subtle.importKey('raw',bits.slice(0,32),{name:'AES-GCM'},false,['encrypt','decrypt']);
+  const token=[...bits.slice(32)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  return {key,token};
+}
+
+function save(){ if(S.demo||!S.key) return; clearTimeout(saveT); saveT=setTimeout(saveNow,300); }
+async function saveNow(){ if(!S.D||S.demo||!S.key) return; queueDiff(); await persist(); renderStatus(); flush(); }
+async function persist(){ if(!S.key||S.demo) return; try{ const e=await encObj(S.key,{D:S.D,synced,lastSync}); ls.set('rb3-cache',JSON.stringify(e)); }catch(e){} }
+async function loadCache(){ try{ const raw=ls.get('rb3-cache'); if(!raw) return false; const o=await decObj(S.key,JSON.parse(raw)); S.D=normalizeD(o.D); synced=o.synced||{}; lastSync=o.lastSync||null; return true; }catch(e){ return false; } }
+
+function snapshot(){ const out={}; KINDS.forEach(k=>S.D[k].forEach(o=>{ if(o&&o.id) out[k+'|'+o.id]=o; })); METAS.forEach(m=>out['meta|'+m]=S.D[m]); return out; }
+function queueDiff(){ const cur=snapshot();
+  for(const key in cur){ const j=JSON.stringify(cur[key]); if(synced[key]!==j) pendingQ.set(key,{j,o:cur[key]}); else pendingQ.delete(key); }
+  for(const key in synced){ if(!(key in cur)) pendingQ.set(key,{del:true}); }
+  S.sync.pending=pendingQ.size; }
+async function flush(){
+  if(pushing||!sb||!S.hh||!pendingQ.size) return; pushing=true; let again=false;
+  try{
+    const entries=[...pendingQ.entries()].slice(0,200);
+    const rows=await Promise.all(entries.map(async([key,v])=>{ const i=key.indexOf('|'), kind=key.slice(0,i), id=key.slice(i+1);
+      if(v.del) return {household_id:S.hh.id,kind,id,iv:null,ct:null,deleted:true};
+      const e=await encObj(S.key,v.o); return {household_id:S.hh.id,kind,id,iv:e.iv,ct:e.ct,deleted:false}; }));
+    const {error}=await sb.from('records').upsert(rows,{onConflict:'household_id,kind,id'});
+    if(error) throw error;
+    entries.forEach(([key,v])=>{ if(pendingQ.get(key)===v){ pendingQ.delete(key); if(v.del) delete synced[key]; else synced[key]=v.j; } });
+    S.sync.state='ok'; S.sync.err=''; S.sync.last=Date.now(); again=pendingQ.size>0;
+  }catch(e){ S.sync.state=navigator.onLine===false?'offline':'error'; S.sync.err=(e&&e.message)||''; }
+  finally{ pushing=false; S.sync.pending=pendingQ.size; await persist(); renderStatus(); if(again) setTimeout(flush,50); }
+}
+async function applyRow(r){
+  const key=r.kind+'|'+r.id; if(pendingQ.has(key)) return false; // neodeslaná změna v tomhle telefonu má přednost
+  if(r.kind==='meta'){ if(r.deleted||!METAS.includes(r.id)) return false; const o=await decObj(S.key,{iv:r.iv,ct:r.ct}); const j=JSON.stringify(o); if(synced[key]===j) return false; S.D[r.id]=o; if(r.id==='settings') normalizeD(S.D); synced[key]=JSON.stringify(S.D[r.id]); return {o}; }
+  if(!KINDS.includes(r.kind)) return false;
+  const arr=S.D[r.kind], i=arr.findIndex(x=>x.id===r.id);
+  if(r.deleted){ delete synced[key]; if(i>=0){ arr.splice(i,1); return {del:true}; } return false; }
+  const o=await decObj(S.key,{iv:r.iv,ct:r.ct}); const j=JSON.stringify(o); if(synced[key]===j&&i>=0) return false;
+  if(i>=0) arr[i]=o; else arr.push(o); synced[key]=j; return {o};
+}
+async function pull(){
+  let from=lastSync, changed=false;
+  for(let guard=0;guard<100;guard++){
+    let q=sb.from('records').select('kind,id,iv,ct,deleted,updated_at,updated_by').eq('household_id',S.hh.id).order('updated_at',{ascending:true}).limit(1000);
+    if(from) q=q.gt('updated_at',from);
+    const {data,error}=await q; if(error) throw error;
+    for(const r of data){ try{ if(await applyRow(r)) changed=true; }catch(e){} from=r.updated_at; }
+    if(data.length<1000) break;
+  }
+  lastSync=from; return changed;
+}
+function subscribe(){
+  if(!sb||!S.hh) return; if(channel){ try{ sb.removeChannel(channel); }catch(e){} }
+  channel=sb.channel('rb-'+S.hh.id).on('postgres_changes',{event:'*',schema:'public',table:'records',filter:'household_id=eq.'+S.hh.id},async p=>{
+    const r=p.new; if(!r||!r.kind) return;
+    try{ const res=await applyRow(r); if(r.updated_at&&(!lastSync||r.updated_at>lastSync)) lastSync=r.updated_at; if(!res) return;
+      if(res.o&&r.kind==='tx'&&r.updated_by!==S.uid) notifyIncoming(res.o);
+      await persist(); render(); }catch(e){} })
+    .subscribe(st=>{ S.sync.live=st==='SUBSCRIBED'; renderStatus(); });
+}
+function notifyIncoming(o){ const N=names(); if(!o.by||o.by===S.me||!N[o.by]) return; const ed=(o.changedAt||0)>(o.createdAt||0)+2000;
+  const what=o.type==='prevod'?`převod ${kc(o.amount)}`:`${o.note||(CAT[o.cat]||{}).n||''} ${o.type==='prijem'?'+':'−'}${kc(o.amount)}`;
+  toast(`${N[o.by]} ${ed?'upravil':'zapsal'}${fem(N[o.by])?'a':''}: ${what}`); }
+async function ensureSession(){
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){ const {data,error}=await sb.auth.signInAnonymously(); if(error) throw error; session=data.session;
+    if(S.hh&&S.token){ const {error:e2}=await sb.rpc('join_household',{p_code:S.hh.code,p_token:S.token}); if(e2) throw e2; } }
+  S.uid=session.user.id;
+}
+let syncing=false;
+async function syncNow(){
+  if(!sb||!S.hh||S.demo||syncing) return; syncing=true;
+  try{ await ensureSession(); const ch=await pull(); queueDiff(); S.sync.state='ok'; S.sync.err=''; await persist(); if(ch) render(); else renderStatus(); flush(); if(!channel) subscribe(); }
+  catch(e){ S.sync.state=navigator.onLine===false?'offline':'error'; S.sync.err=(e&&e.message)||''; renderStatus(); if(S.tab==='prehled') render(); }
+  finally{ syncing=false; }
+}
+function statusText(){ if(S.demo) return 'ukázka'; const p=S.sync.pending;
+  return S.sync.state==='offline'?`offline${p?' · '+p+' čeká':''}`:S.sync.state==='error'?'chyba synchronizace':p?'odesílám…':S.sync.state==='ok'?(S.sync.live?'synchronizováno živě':'synchronizováno'):'načítám…'; }
+function renderStatus(){ const el=$('#meLabel'); if(el) el.textContent=(S.me&&S.D?names()[S.me]+' · ':'')+statusText(); }
+function statusBanner(){
+  if(S.demo) return `<div class="banner"><span>Ukázka s vymyšlenými čísly. Nic se neukládá.</span><button data-act="exitdemo">Ukončit ukázku</button></div>`;
+  if(S.sync.state==='offline') return `<div class="banner"><span>Bez připojení. ${S.sync.pending?`${S.sync.pending} ${pl(S.sync.pending,'změna se odešle','změny se odešlou','změn se odešle')}, až budete online.`:'Ukazuju data uložená v telefonu.'}</span></div>`;
+  if(S.sync.state==='error') return `<div class="banner" style="background:var(--over-soft)"><span>Synchronizace se nepovedla${S.sync.err?': '+esc(S.sync.err):''}.</span><button data-act="retry">Zkusit znovu</button></div>`;
+  return '';
+}
+
+/* ---------- první spuštění ---------- */
+const PW_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genPassword=()=>{ const r=crypto.getRandomValues(new Uint8Array(16)); return [0,1,2,3].map(g=>[...r.slice(g*4,g*4+4)].map(x=>PW_ABC[x%32]).join('')).join('-'); };
+function setChrome(on){ $('nav.tabs').hidden=!on; $('#fab').hidden=!on; $('header.top .month').style.visibility=on?'':'hidden'; }
+function showOnboarding(step,info){
+  S.onboard=true; setChrome(false); closeSheet(); $('#meLabel').textContent='';
+  const m=$('#main'); let h='';
+  if(!sb) h=`<section class="card"><h2>Appka ještě není propojená</h2><p class="p">Chybí adresa databáze v souboru config.js. Než ji doplníme, můžeš si prohlédnout ukázku.</p><button class="btn ghost wide" data-ob="demo">Prohlédnout ukázku</button></section>`;
+  else if(!step) h=`<div class="hero" style="margin-top:4px"><div><div class="lab">Vítej</div><div class="big" style="font-size:2rem">Rozpočet Balínkovi</div></div><small>Společný rozpočet pro dva telefony. Všechno se šifruje přímo v telefonu heslem domácnosti, které znáte jen vy dva.</small></div>
+    <section class="card"><h2>Začínáme</h2><p class="p">Jeden z vás domácnost založí, druhý se připojí kódem a heslem.</p><div class="btnrow"><button class="btn" data-ob="create">Založit domácnost</button><button class="btn ghost" data-ob="join">Připojit se</button></div></section>
+    <section class="card"><h2>Jen se rozhlédnout</h2><p class="p">Ukázka s vymyšlenými čísly. Nic se neukládá.</p><button class="btn ghost wide" data-ob="demo">Prohlédnout ukázku</button></section>`;
+  else if(step==='create') h=`<section class="card" style="margin-top:4px"><h2>Založit domácnost</h2>
+    <div class="grid2"><div class="field"><label for="obA">První</label><input id="obA" value="Filip"></div><div class="field"><label for="obB">Druhý</label><input id="obB" value="Baruška"></div></div>
+    <span class="lbl">Kdo jsi ty</span><div class="seg" id="obMe" style="margin-top:6px"><button data-v="a" aria-pressed="true">Filip</button><button data-v="b" aria-pressed="false">Baruška</button></div>
+    <div class="field"><label for="obPw">Heslo domácnosti (aspoň 12 znaků)</label><input id="obPw" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+    <button class="btn ghost sm" type="button" data-ob="gen" style="margin:-6px 0 12px">Vygenerovat silné heslo</button>
+    <label class="checkrow"><input type="checkbox" id="obSaved"> Heslo mám bezpečně uložené (Klíčenka nebo zamčená poznámka)</label>
+    <p class="p" style="font-size:.84rem">Heslo nezná nikdo jiný, ani server. Když ho zapomenete a odhlásíte oba telefony, data nepůjde obnovit.</p>
+    <div class="smart" id="obErr" role="status" style="color:var(--over)"></div>
+    <div class="btnrow"><button class="btn ghost" data-ob="back">Zpět</button><button class="btn" data-ob="docreate">Založit</button></div></section>`;
+  else if(step==='join') h=`<section class="card" style="margin-top:4px"><h2>Připojit se k domácnosti</h2><p class="p">Kód najde ten, kdo domácnost založil, ve Více → Nastavení.</p>
+    <div class="field"><label for="obCode">Kód domácnosti</label><input id="obCode" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="např. 4F7A9C21" style="text-transform:uppercase;letter-spacing:.1em"></div>
+    <div class="field"><label for="obPw">Heslo domácnosti</label><input id="obPw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false"></div>
+    <div class="smart" id="obErr" role="status" style="color:var(--over)"></div>
+    <div class="btnrow"><button class="btn ghost" data-ob="back">Zpět</button><button class="btn" data-ob="dojoin">Připojit</button></div></section>`;
+  else if(step==='done') h=`<div class="hero" style="margin-top:4px"><div><div class="lab">Domácnost je založená</div><div class="big num" style="letter-spacing:.08em">${esc(info.code)}</div></div><small>Kód domácnosti</small></div>
+    <section class="card"><h2>Jak připojit druhý telefon</h2><ol class="steps"><li>Na druhém telefonu otevři tuhle stránku v Safari a přidej ji na plochu (Sdílet → Přidat na plochu).</li><li>Otevři appku z plochy a zvol Připojit se.</li><li>Zadej kód <b>${esc(info.code)}</b> a heslo domácnosti. Heslo pošli jinou cestou než kód, třeba řekni osobně.</li></ol>
+    <div class="btnrow"><button class="btn ghost" data-act="sharecode">Poslat kód</button><button class="btn" data-ob="finish">Pokračovat do appky</button></div></section>`;
+  m.innerHTML=h; scrollTo(0,0);
+  const err=t=>{ const e=$('#obErr'); if(e) e.textContent=t; };
+  const busy=(b,on,label)=>{ if(!b) return; b.disabled=on; if(label) b.textContent=label; };
+  m.querySelectorAll('[data-ob]').forEach(b=>b.onclick=async()=>{ const a=b.dataset.ob;
+    if(a==='create'||a==='join') return showOnboarding(a);
+    if(a==='back') return showOnboarding();
+    if(a==='demo'){ S.demo=true; S.D=seedData(); S.onboard=false; setChrome(true); render(); if(!S.me) setTimeout(askWhoAmI,300); return; }
+    if(a==='gen'){ $('#obPw').value=genPassword(); return; }
+    if(a==='finish'){ finishOnboarding(); return; }
+    if(a==='docreate'){
+      const pw=$('#obPw').value.trim(), nA=$('#obA').value.trim()||'Filip', nB=$('#obB').value.trim()||'Baruška', me=$('#obMe [aria-pressed="true"]').dataset.v;
+      if(pw.length<12) return err('Heslo musí mít aspoň 12 znaků. Nejjednodušší je nechat ho vygenerovat.');
+      if(!$('#obSaved').checked) return err('Potvrď, že máš heslo uložené. Bez něj se k datům na novém telefonu nedostaneš.');
+      busy(b,true,'Zakládám…'); err('');
+      try{ await ensureSession(); const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const {key,token}=await deriveHH(pw,salt);
+        const {data,error}=await sb.rpc('create_household',{p_salt:salt,p_token:token}); if(error) throw error; const row=Array.isArray(data)?data[0]:data;
+        S.hh={id:row.household_id,code:row.household_code}; S.key=key; S.token=token; await idbSet('key',key); await idbSet('token',token); ls.set('rb-hh',JSON.stringify(S.hh));
+        S.me=me; ls.set('rb-me',me); S.D=emptyData(nA,nB); synced={}; lastSync=null; queueDiff(); await persist(); flush(); subscribe();
+        showOnboarding('done',S.hh);
+      }catch(e){ busy(b,false,'Založit'); err(friendlyErr(e)); }
+    }
+    if(a==='dojoin'){
+      const code=$('#obCode').value.replace(/\s/g,'').toUpperCase(), pw=$('#obPw').value.trim();
+      if(code.length<6) return err('Zadej kód domácnosti.'); if(!pw) return err('Zadej heslo domácnosti.');
+      busy(b,true,'Připojuji…'); err('');
+      try{ await ensureSession(); const {data:salt,error:e1}=await sb.rpc('household_salt',{p_code:code}); if(e1) throw e1; if(!salt) throw new Error('Domácnost s tímto kódem neexistuje.');
+        const {key,token}=await deriveHH(pw,salt); const {data:hid,error:e2}=await sb.rpc('join_household',{p_code:code,p_token:token}); if(e2) throw e2;
+        S.hh={id:hid,code}; S.key=key; S.token=token; await idbSet('key',key); await idbSet('token',token); ls.set('rb-hh',JSON.stringify(S.hh));
+        S.D=emptyData(); synced={}; lastSync=null; await pull(); await persist(); subscribe(); S.sync.state='ok';
+        S.me=null; ls.del('rb-me'); finishOnboarding(); setTimeout(askWhoAmI,300);
+      }catch(e){ busy(b,false,'Připojit'); err(friendlyErr(e)); }
+    }
+  });
+  m.querySelectorAll('#obMe button').forEach(b=>b.onclick=()=>m.querySelectorAll('#obMe button').forEach(x=>x.setAttribute('aria-pressed',x===b)));
+  ['obA','obB'].forEach((id,i)=>{ const el=$('#'+id); if(el) el.oninput=()=>{ m.querySelectorAll('#obMe button')[i].textContent=el.value||(i?'Druhý':'První'); }; });
+  const sc=m.querySelector('[data-act="sharecode"]'); if(sc) sc.onclick=shareCode;
+}
+function friendlyErr(e){ const t=(e&&e.message)||String(e);
+  if(/anonymous/i.test(t)&&/disabled/i.test(t)) return 'V Supabase nejsou zapnuté anonymní přihlášení (Authentication → Sign In / Providers → Anonymous).';
+  if(/Špatný kód nebo heslo/.test(t)) return 'Kód nebo heslo nesedí. Zkontroluj velká a malá písmena.';
+  if(/Failed to fetch|NetworkError|Load failed/i.test(t)) return 'Nejde se připojit k internetu nebo k databázi. Zkus to znovu.';
+  if(/function .* does not exist|Could not find the function/i.test(t)) return 'Databáze ještě není připravená (chybí SQL schéma).';
+  return t; }
+function finishOnboarding(){ S.onboard=false; setChrome(true); S.tab='prehled'; render(); }
+async function shareCode(){ const txt=`Rozpočet Balínkovi\nOdkaz: ${location.href.split('#')[0]}\nKód domácnosti: ${S.hh?S.hh.code:''}\nHeslo ti řeknu zvlášť.`;
+  try{ if(navigator.share){ await navigator.share({text:txt}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  try{ await navigator.clipboard.writeText(txt); toast('Zkopírováno, vlož to do zprávy'); }catch(e){ toast('Kód: '+(S.hh?S.hh.code:'')); } }
+async function logout(){ clearTimeout(saveT); if(channel){ try{ sb.removeChannel(channel); }catch(e){} }
+  try{ await sb.auth.signOut(); }catch(e){} await idbClear(); ['rb-hh','rb3-cache','rb-me','rb-auth'].forEach(k=>ls.del(k)); location.reload(); }
+function downloadBlob(name,blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); }
+async function exportBackup(){ const {lastSeen,...data}=S.D; const blob=new Blob([JSON.stringify({app:'rozpocet-balinkovi',v:3,exportedAt:new Date().toISOString(),data},null,1)],{type:'application/json'});
+  const name=`rozpocet-zaloha-${today()}.json`;
+  try{ const f=new File([blob],name,{type:'application/json'}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:name}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  downloadBlob(name,blob); }
+function importBackup(file){ file.text().then(txt=>{ let o; try{ o=JSON.parse(txt); }catch(e){ toast('Soubor není platná záloha.'); return; }
+  const d=o&&o.data; if(!d||o.app!=='rozpocet-balinkovi'){ toast('Soubor není záloha z téhle appky.'); return; }
+  let n=0; KINDS.forEach(k=>(Array.isArray(d[k])?d[k]:[]).forEach(it=>{ if(!it||!it.id) return; const arr=S.D[k], i=arr.findIndex(x=>x.id===it.id); if(i>=0) arr[i]=it; else arr.push(it); n++; }));
+  if(d.settings){ S.D.settings={...S.D.settings,...d.settings,limits:{...(S.D.settings.limits||{}),...(d.settings.limits||{})}}; }
+  if(d.itemCats) S.D.itemCats={...S.D.itemCats,...d.itemCats};
+  normalizeD(S.D); save(); toast(`Nahráno ${n} ${pl(n,'záznam','záznamy','záznamů')}`); render(); }); }
+
+/* ================= výpočty ================= */
+const fixedSorted = () => [...D().fixed].sort((a,b)=>(a.order??999)-(b.order??999) || String(a.name).localeCompare(b.name,'cs'));
+const fixTxId = (k,f) => 'fx-'+k+'-'+f.id;
+const fixDone = (k,f) => D().tx.some(t=>t.fixedId===f.id && mkey(t.date)===k);
+const fixedTotal = () => D().fixed.reduce((a,f)=>a+(+f.amount||0),0);
+const dueDate = (k,f) => k+'-'+pad(Math.min(+f.day,daysIn(k)));
+function dueList(){ const k=mkey(today()); return fixedSorted().filter(f=>f.day && !fixDone(k,f)).map(f=>({f,date:dueDate(k,f),d:daysUntil(dueDate(k,f))})).filter(x=>x.d<=3).sort((a,b)=>a.d-b.d); }
+const dueLabel = d => d<0 ? `${-d} ${pl(-d,'den','dny','dní')} po splatnosti` : d===0 ? 'dnes' : d===1 ? 'zítra' : `za ${d} dny`;
+const isTx = t => t.type==='prijem'||t.type==='vydaj';
+
+function monthStats(k){
+  const list = D().tx.filter(t=>mkey(t.date)===k && isTx(t));
+  let inc=0, out=0, fixedOut=0; const byCat={}, byWho={a:0,b:0,spol:0};
+  list.forEach(t=>{ if(t.type==='prijem') inc+=t.amount; else { out+=t.amount; if(t.fixedId) fixedOut+=t.amount; byCat[t.cat]=(byCat[t.cat]||0)+t.amount; byWho[t.who]=(byWho[t.who]||0)+t.amount; } });
+  return {list,inc,out,fixedOut,varOut:out-fixedOut,byCat,byWho};
+}
+function avgMonths(n){ let inc=0,out=0,c=0; for(let i=1;i<=n;i++){ const st=monthStats(shiftM(mkey(today()),-i)); if(st.inc||st.out){inc+=st.inc;out+=st.out;c++;} } return c?{inc:inc/c,out:out/c,n:c}:{inc:0,out:0,n:0}; }
+function cumulative(k){
+  const n=daysIn(k), arr=new Array(n).fill(0);
+  D().tx.forEach(t=>{ if(t.type==='vydaj' && mkey(t.date)===k){ const d=+t.date.slice(8,10); if(d>=1&&d<=n) arr[d-1]+=t.amount; } });
+  for(let i=1;i<n;i++) arr[i]+=arr[i-1];
+  return arr;
+}
+function newsItems(){ const o=other(); if(!o) return []; return D().tx.filter(t=>t.by===o && (t.changedAt||t.createdAt||0)>(D().lastSeen||0)).sort((a,b)=>(b.changedAt||0)-(a.changedAt||0)); }
+function settlement(){ // >0: B dluží A
+  let owed=0; D().tx.forEach(t=>{
+    if(t.type==='vydaj' && t.shared && (t.who==='a'||t.who==='b')) owed += (t.who==='a'?1:-1)*t.amount/2;
+    if(t.type==='vyrovnani') owed += (t.from==='b'?-1:1)*t.amount;
+  }); return Math.round(owed);
+}
+const sinkNeed = s => { const left=Math.max(1,monthsBetween(mkey(today()),s.due)); return Math.max(0,(s.amount-(s.saved||0)))/left; };
+const goalNeed = g => { if(!g.deadline||g.saved>=g.target) return 0; const left=monthsBetween(mkey(today()),g.deadline); return left>0?(g.target-g.saved)/left:0; };
+function accBalanceAt(a,date){
+  const hs=(a.history||[]).filter(h=>h.d<=date); const anc=hs[hs.length-1]; if(!anc) return null; if(a.kind==='dluh') return anc.v;
+  let v=anc.v; D().tx.forEach(t=>{ if(t.date<=anc.d||t.date>date) return;
+    if(t.type==='prevod'){ if(t.to===a.id) v+=t.amount; if(t.from===a.id) v-=t.amount; }
+    else if(t.account===a.id && (t.type==='prijem'||t.type==='vydaj')) v+=(t.type==='prijem'?1:-1)*t.amount; });
+  return Math.round(v*100)/100;
+}
+const accVal = a => accBalanceAt(a,today())??0;
+const accName = id => (D().accounts.find(a=>a.id===id)||{name:'?'}).name;
+const accOpts = (sel,filter) => D().accounts.filter(filter||(a=>a.kind!=='dluh')).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.name)}</option>`).join('');
+const defAcc = () => ls.get('rb-acc-'+(S.me||'x')) || (D().accounts.find(a=>a.kind==='ucet')||{}).id || '';
+const interestM = a => accVal(a)*(+a.rate||0)/100/12*0.85; // po 15% dani
+function condStatus(a,k){
+  const c=a.cond; if(!c||!c.min) return null; const src=D().accounts.find(x=>x.id===c.account); if(!src) return null;
+  const ids=new Set(); D().tx.forEach(t=>{ if(mkey(t.date)!==k) return; if(t.type==='vydaj'&&t.account===src.id) ids.add(t.receiptId||t.id); else if(c.transfers&&t.type==='prevod'&&t.from===src.id) ids.add(t.id); });
+  const n=ids.size, cur=k===mkey(today()), left=cur?daysIn(k)-new Date().getDate():0;
+  return {n,min:c.min,met:n>=c.min,missing:Math.max(0,c.min-n),left,src,cur};
+}
+function condCard(a,k){ const cs=condStatus(a,k); if(!cs) return '';
+  return `<section class="card"><h2>Úrok ${String(a.rate||0).replace('.',',')} % na ${esc(a.name)} <small style="color:${cs.met?'var(--in)':cs.cur&&cs.left<=7?'var(--warn)':'var(--muted)'}">${cs.met?'podmínka splněná':`chybí ${cs.missing} ${pl(cs.missing,'platba','platby','plateb')}`}</small></h2>
+    <div class="bar" style="height:10px"><i style="width:${Math.min(100,cs.n/cs.min*100)}%;background:${cs.met?'var(--in)':'var(--accent)'}"></i></div>
+    <p class="p mt">${cs.n} z ${cs.min} plateb z účtu ${esc(cs.src.name)}${cs.cur&&!cs.met?`, do konce měsíce ${cs.left} ${pl(cs.left,'den','dny','dní')}`:''}. ${a.rate?`Úrok teď dělá zhruba ${kc(interestM(a))} měsíčně po zdanění.`:''}</p></section>`; }
+const netWorth = (date) => D().accounts.reduce((s,a)=>{ const v=accBalanceAt(a,date||today()); return s+(v==null?0:(a.kind==='dluh'?-1:1)*v); },0);
+function guessCat(note){
+  const n=(note||'').toLowerCase().trim(); if(n.length<2) return null;
+  // naučené z historie
+  const first=n.split(/\s+/)[0]; const cnt={};
+  D().tx.forEach(t=>{ if(t.type==='vydaj'&&t.note&&t.note.toLowerCase().split(/\s+/)[0]===first) cnt[t.cat]=(cnt[t.cat]||0)+1; });
+  const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; if(best) return {cat:best[0],why:'podle dřívějších zápisů'};
+  for(const [cat,words] of Object.entries(KEYWORDS)) if(words.some(w=>n.includes(w))) return {cat,why:'podle názvu'};
+  return null;
+}
+
+/* ================= účtenky ================= */
+const RC_CATS = ['jidlo','drogerie','domacnost','psi','zdravi','obleceni','sport','darky','ostatni'];
+const itemKey = n => (n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\d+([.,]\d+)?\s*(g|kg|ml|l|ks|x|%)?/g,' ').replace(/[^a-z ]/g,' ').trim().split(/\s+/).filter(Boolean).slice(0,3).join(' ');
+const r2 = n => Math.round(n*100)/100;
+function receiptTxs(rc){
+  const groups={}; rc.items.forEach(it=>{ const g=groups[it.cat]=groups[it.cat]||{amt:0,names:[]}; g.amt+=+it.price||0; g.names.push(it.name); });
+  const sum=Object.values(groups).reduce((a,g)=>a+g.amt,0), total=rc.total>0?rc.total:sum, diff=r2(total-sum);
+  const keys=Object.keys(groups); if(Math.abs(diff)>=0.01 && keys.length){ keys.sort((a,b)=>groups[b].amt-groups[a].amt); groups[keys[0]].amt+=diff; }
+  const now=Date.now();
+  return Object.entries(groups).map(([cat,g])=>({id:'rc-'+rc.id+'-'+cat,date:rc.date,amount:r2(g.amt),type:'vydaj',cat,who:rc.who||'spol',note:rc.store||'Účtenka',receiptId:rc.id,account:rc.account||null,items:g.names,shared:!!rc.shared,createdAt:rc.createdAt||now,changedAt:now,by:rc.by||null})).filter(t=>t.amount>0);
+}
+function saveReceipt(rc){ D().tx=D().tx.filter(t=>t.receiptId!==rc.id); receiptTxs(rc).forEach(t=>D().tx.push(t)); upsert('receipts',rc); }
+const RC_PROMPT = `Jsi pomocník na rozúčtování české účtenky z obchodu (Kaufland, Lidl, Albert, Billa, DM, Rossmann a další). Přečti všechny položky na fotkách. U dlouhé účtenky může být víc fotek, které na sebe navazují: položky nezdvojuj.
+Vrať jen JSON objekt:
+{"store": "název obchodu", "date": "YYYY-MM-DD" nebo null, "total": celková částka k úhradě v Kč jako číslo, "items": [{"name": "čitelný název položky česky, zkratky rozepiš (např. RAJČ.CHERRY → Rajčata cherry)", "price": konečná cena položky v Kč, "category": "kategorie"}]}
+Kategorie:
+- jidlo: potraviny, pečivo, ovoce, zelenina, maso, mléčné výrobky, sladkosti, nápoje, alkohol
+- drogerie: hygiena, kosmetika, prací a čisticí prostředky, toaletní papír, kapesníky, pleny
+- domacnost: nádobí, potřeby do kuchyně, žárovky, baterie, textil a dekorace do bytu, nářadí
+- psi: krmivo, pamlsky a potřeby pro psy
+- zdravi: léky, vitamíny, náplasti
+- obleceni: oblečení, obuv, ponožky
+- sport: sportovní potřeby
+- darky: dárky, květiny, přáníčka
+- ostatni: zálohy na lahve, tašky, cokoli jiného
+Pravidla: slevy (řádky SLEVA, Lidl Plus, Kaufland Card, akce, kupon) odečti od položky, ke které patří, a nevracej je jako samostatnou položku. Množství (např. 2 x 24,90) započítej do ceny a uveď v názvu. Ceny jsou kladná čísla. Součet cen má odpovídat total.`;
+const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const ITEM_DICT = [ // pořadí je důležité: specifičtější kategorie dřív
+  ['ostatni',['zaloh','vratn','taska','igelit']],
+  ['zdravi',['vitamin','paralen','ibalgin','ibuprof','panadol','nurofen','naplast','magnez','acylpyrin','strepsils']],
+  ['psi',['pes','psi','pejsk','granul','pamlsk','pedigree','brit','chappi','frolic','dog','kapsick']],
+  ['domacnost',['bateri','zarov','alobal','folie','pecici','sacky','svick','hrnek','talir','sklenic','houbick','hubk','uterk','mop','kbelik','izolep','lepic','zapalov','sirky']],
+  ['drogerie',['sampon','mydl','zubn','kartac','deodor','deo','antiperspir','sprch','kondicion','balzam','praci','persil','ariel','lenor','jar','savo','domestos','cistic','wc','toalet','kapesn','plen','ubrousk','vlhc','krem','nivea','dove','holic','ziletk','hygien','vata','tampon','vlozk','odlicov','parfem','avivaz','myck','finish','calgon','pasta zub']],
+  ['obleceni',['ponozk','tricko','kalhot','spodn','boty','puncoch']],
+  ['darky',['kytic','kvetin','prani','darek','darkov']],
+  ['jidlo',['rohl','chleb','chlib','housk','bagel','pecivo','kobli','kolac','buchta','mlek','mleko','maslo','syr','eidam','gouda','mozzar','niva','hermelin','tvaroh','jogurt','jog','smetan','kefir','vejc','vajic','sunk','salam','park','klobas','slanin','kure','kuraci','prsa','stehn','maso','mlet','vepr','hovez','krut','ryb','losos','tunak','banan','jabl','hrusk','pomer','mandar','citron','hrozn','jahod','boruvk','avokad','kiwi','melou','rajc','okurk','paprik','mrkev','brambor','cibul','cesnek','salat','zeli','brokol','cuket','zelenin','ovoce','mouk','cukr','sul','ryze','testov','spaget','ovesn','musli','kecup','horcic','majon','olej','ocet','omack','polevk','konzerv','fazol','cizrn','cocka','kukuric','cokol','susenk','oplat','bonbon','zmrzl','chips','brambur','tycink','orisk','orech','mandle','med','dzem','nutell','pivo','lezak','vino','prosec','rum','vodka','gin','whisk','voda','mattoni','dzus','juice','limon','cola','pepsi','sprite','fanta','caj','kava','napoj','pizza','bageta','sendvic','tortil','hummus','pesto','gnocchi','lasagn','pudink','kakao','muffin','croissant','donut','sirup']]
+];
+function guessItemCat(name){
+  const k=itemKey(name), learned=(D().itemCats||{})[k]; if(learned) return {cat:learned,learned:true};
+  const n=norm(name), toks=n.split(/[^a-z]+/).filter(Boolean);
+  for(const [cat,stems] of ITEM_DICT) for(const st of stems){ if(st.includes(' ')){ if(n.includes(st)) return {cat}; } else if(toks.some(t=>t.startsWith(st))) return {cat}; }
+  return {cat:'jidlo',unsure:true};
+}
+const STORES=['lidl','kaufland','albert','billa','tesco','penny','globus','rossmann','teta','makro','norma','coop','hruska','dm drogerie'];
+function parseReceiptText(txt){
+  const lines=txt.split(/\r?\n/).map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const PRICE=/(-?\d{1,3}(?:[ .]\d{3})*[.,]\d{2}|-?\d{1,5}[.,]\d{2})\s*-?\s*(?:[A-Z]{1,2}|Kč|CZK)?\s*$/i;
+  const SKIP=/^(mezisou|subtotal|platba|platebn|karta|kartou|hotov|vraceno|vráceno|dph|sazba|základ|zaklad|eet|bkp|fik|dič|ičo|ic:|dic|děkuj|dekuj|pokladn|účtenk|uctenk|daňov|danov|doklad|datum|čas|cas |tel|www|provozov|česká rep|ceska rep|visa|master|terminál|terminal|autoriz|transak|stav bod|body|ušetř|usetr|celkem uš|rekapit|zaokrouhl|číslo|cislo|kasa|prodavač|obsluh)/i;
+  const TOTAL=/(celkem|k úhrad|k uhrad|k zaplac|suma)/i;
+  const DISC=/(sleva|lidl plus|kaufland card|kupon|kupón|bonus|akce -)/i;
+  const QTY=/^\d+([.,]\d+)?\s*(ks|kg|x|×)\b/i;
+  const val=s=>parseAmt(s.replace(/[ ]/g,'').replace(/\.(?=\d{3}\b)/g,''));
+  let store='', date=null, total=null; const inline=[], names=[], prices=[];
+  for(const l of lines){
+    const nl=norm(l);
+    if(!store){ const st=STORES.find(x=>nl.includes(x)); if(st) store=st==='dm drogerie'?'DM drogerie':st.charAt(0).toUpperCase()+st.slice(1); }
+    if(!date){ const m=l.match(/(\d{1,2})\.\s?(\d{1,2})\.\s?(\d{4})/); if(m) date=m[3]+'-'+pad(m[2])+'-'+pad(m[1]); }
+    const pm=l.match(PRICE); const before=pm?l.slice(0,pm.index).trim():l; const letters=(before.match(/[a-zá-ž]/gi)||[]).length;
+    if(TOTAL.test(l)){ if(pm){ const v=Math.abs(val(pm[1])); if(v>(total||0)) total=v; } continue; }
+    if(SKIP.test(l)) continue;
+    if(pm && letters>=2 && !QTY.test(before)){
+      const v=val(pm[1]); if(!isFinite(v)) continue;
+      if(DISC.test(before)||v<0||/-\s*$/.test(l)){ const prev=inline[inline.length-1]; if(prev) prev.price=r2(prev.price-Math.abs(v)); continue; }
+      inline.push({name:before,price:v});
+    } else if(pm && letters<2){ const v=val(pm[1]); if(isFinite(v)&&!QTY.test(l)) prices.push(v); }
+    else if(!pm && letters>=2 && !QTY.test(l)) names.push(l);
+  }
+  let items=inline;
+  if(inline.length<2 && names.length && prices.length){ // Živý text často zkopíruje názvy a ceny ve dvou sloupcích
+    const isHeader=n=>{ const x=norm(n).trim(); return STORES.some(st=>x===st||(x.includes(st)&&/s\.?r\.?o|v\.?o\.?s|a\.s\.|ceska|republika|spol/.test(x))); };
+    const nm=names.filter(n=>!isHeader(n) && !/^[\d\s.,:/-]+$/.test(n));
+    let run=0; const ps=[]; for(const v of prices){ if(ps.length>1 && Math.abs(v-run)<0.6){ total=total||v; break; } ps.push(v); run+=v; }
+    items=[]; let pi=0;
+    for(const n of nm){ if(pi>=ps.length) break; if(DISC.test(n)){ const prev=items[items.length-1]; if(prev) prev.price=r2(prev.price-Math.abs(ps[pi])); pi++; continue; } items.push({name:n,price:ps[pi++]}); }
+  }
+  const pretty=n=>{ let t=n.replace(/^\d{3,}\s+/,'').replace(/\s+[A-Z]$/,'').trim(); if(t===t.toUpperCase()) t=t.charAt(0)+t.slice(1).toLowerCase(); return t.slice(0,80); };
+  items=items.filter(i=>i.price>0).map(i=>{ const name=pretty(i.name); const g=guessItemCat(name); return {name,price:r2(i.price),cat:g.cat,ai:g.cat,learned:!!g.learned,unsure:!!g.unsure}; });
+  const sum=r2(items.reduce((a,i)=>a+i.price,0));
+  return {id:uid('r'),store:store||'Účtenka',date:date&&date<=today()?date:today(),total:total||sum,items,who:'spol',by:S.me||null,createdAt:Date.now(),nLearned:items.filter(i=>i.learned).length,nUnsure:items.filter(i=>i.unsure).length};
+}
+
+async function readReceiptItems(files){
+  const sample=await window.claude.use('sample'); if(!sample) throw {code:'not_granted'};
+  const lim=await sample.limits().catch(()=>null); const max=(lim&&lim.images&&lim.images.maxCount)||3;
+  const r=await sample.json(RC_PROMPT,{images:[...files].slice(0,max),modelTier:'default'});
+  const num=v=>{ const n=typeof v==='number'?v:parseAmt(String(v||'').replace(/[^\d,.\-]/g,'')); return isFinite(n)?n:NaN; };
+  const learned=D().itemCats||{}; let nLearned=0;
+  const items=(Array.isArray(r&&r.items)?r.items:[]).map(it=>{ const price=num(it.price); if(!it||!it.name||!(price>0)) return null;
+    const ai=EXP.some(c=>c.id===it.category)?it.category:'ostatni'; const lc=learned[itemKey(it.name)]; if(lc&&lc!==ai) nLearned++;
+    return {name:String(it.name).slice(0,80),price:r2(price),cat:lc||ai,ai,learned:!!lc}; }).filter(Boolean);
+  if(!items.length) throw {code:'empty'};
+  const sum=r2(items.reduce((a,i)=>a+i.price,0)), total=num(r.total)>0?r2(num(r.total)):sum;
+  const date=r.date&&/^\d{4}-\d\d-\d\d$/.test(r.date)&&r.date<=today()?r.date:today();
+  return {id:uid('r'),store:String(r.store||'Účtenka').slice(0,40),date,total,items,who:'spol',by:S.me||null,createdAt:Date.now(),nLearned};
+}
+
+function alertsFor(){
+  const out=[], k=S.month, cur=k===mkey(today()), st=monthStats(k), lim=D().settings.limits||{};
+  EXP.forEach(c=>{ const l=+lim[c.id]||0, a=st.byCat[c.id]||0; if(!l) return;
+    if(a>l) out.push({lvl:'over',ico:'!',t:`Obálka ${c.n}: přečerpáno o ${kc(a-l)}`,s:`Utraceno ${kc(a)} z ${kc(l)}.`});
+    else if(a>=l*.85) out.push({lvl:'warn',ico:'%',t:`Obálka ${c.n}: ${Math.round(a/l*100)} %`,s:`Zbývá ${kc(l-a)} do konce měsíce.`});
+  });
+  if(cur && st.inc>0){
+    const day=new Date().getDate(), proj=fixedTotal()+(day>=5?st.varOut/day*daysIn(k):st.varOut);
+    if(day>=5 && proj>st.inc) out.push({lvl:'warn',ico:'↗',t:`Při tomhle tempu utratíte ${kc(proj)}`,s:`To je o ${kc(proj-st.inc)} víc než příjmy za ${mName(k)}.`});
+  } else if(cur && !st.inc && new Date().getDate()>=12) out.push({lvl:'info',ico:'+',t:'Chybí příjmy za tento měsíc',s:'Zapiš výplaty, ať sedí zůstatek a denní rozpočet.',act:'addinc'});
+  const pend=fixedSorted().filter(f=>!fixDone(k,f) && (!cur||!f.day));
+  if(pend.length && (!cur||new Date().getDate()>=3)) out.push({lvl:'info',ico:'≡',t:`Nezapsané fixy: ${pend.length}`,s:`${kc(pend.reduce((a,f)=>a+(+f.amount||0),0))} za ${mName(k)}.`,act:'writefix'});
+  // předplatné
+  D().fixed.forEach(f=>{ const h=(f.priceHistory||[]).slice(-1)[0]; if(h && h.to>h.from && daysUntil(h.d)>-60) out.push({lvl:'warn',ico:'↑',t:`${f.name} zdražil${fem(f.name)?'a':''} o ${kc(h.to-h.from)}`,s:`Z ${kc(h.from)} na ${kc(h.to)} měsíčně, to je ${kc((h.to-h.from)*12)} ročně navíc.`}); });
+  st.list.forEach(t=>{ if(t.type!=='vydaj'||t.fixedId) return; const f=D().fixed.find(f=>f.cat==='predplatne'&&t.note&&t.note.toLowerCase().includes(f.name.toLowerCase())); if(f && t.amount>f.amount) out.push({lvl:'warn',ico:'↑',t:`${f.name}: strženo ${kc(t.amount)}`,s:`Ve fixech máš ${kc(f.amount)}. Zkontroluj, jestli nezdražili.`}); });
+  const owed=settlement(), N=names();
+  if(Math.abs(owed)>=500) out.push({lvl:'info',ico:'⇄',t:owed>0?`${N.b} dluží ${N.a} ${kc(owed)}`:`${N.a} dluží ${N.b} ${kc(-owed)}`,s:'Za společné výdaje placené ze svého.',act:'settle'});
+  D().goals.forEach(g=>{ if(g.deadline&&g.saved<g.target&&monthsBetween(mkey(today()),g.deadline)<=0) out.push({lvl:'over',ico:'◎',t:`Cíl „${g.name}“ měl být hotový`,s:`Chybí ${kc(g.target-g.saved)}.`}); });
+  D().sinking.forEach(s=>{ const left=monthsBetween(mkey(today()),s.due); if(left<=1 && (s.saved||0)<s.amount) out.push({lvl:'warn',ico:'⌛',t:`${s.name} ${left<=0?'je splatné':'příští měsíc'}`,s:`Odloženo ${kc(s.saved||0)} z ${kc(s.amount)}.`}); });
+  D().accounts.forEach(a=>{ const cs=condStatus(a,k); if(cs&&cs.cur&&!cs.met&&cs.left<=7) out.push({lvl:'warn',ico:'%',t:`${a.name}: chybí ${cs.missing} ${pl(cs.missing,'platba','platby','plateb')} pro úrok ${String(a.rate).replace('.',',')} %`,s:`Zbývá ${cs.left} ${pl(cs.left,'den','dny','dní')}. Zaplať kartou z účtu ${cs.src.name}.`}); });
+  const order={over:0,warn:1,info:2}; return out.sort((a,b)=>order[a.lvl]-order[b.lvl]);
+}
+
+/* ================= render ================= */
+function render(){
+  if(!S.D || S.onboard) return;
+  $('#monthLabel').textContent = mName(S.month)+' '+S.month.split('-')[0];
+  renderStatus();
+  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-current', b.dataset.tab===S.tab?'page':'false'));
+  $('#fab').hidden = S.tab==='vice';
+  const nc = newsItems().length + dueList().filter(x=>x.d<=0).length;
+  $('#badge').hidden = !nc; $('#badge').textContent = nc>9?'9+':nc;
+  let h='';
+  if(S.tab==='prehled') h = statusBanner() + renderOverview();
+  else if(S.tab==='pohyby') h = renderList();
+  else if(S.tab==='plan') h = renderPlan();
+  else if(S.tab==='fixy') h = renderFixed();
+  else h = renderVice();
+  const fid = document.activeElement && document.activeElement.id;
+  const keep = (fid==='fq') ? document.activeElement.selectionStart : null;
+  $('#main').innerHTML = h;
+  bindMain();
+  if(fid==='fq'){ const q=$('#fq'); if(q){ q.focus(); try{q.setSelectionRange(keep,keep)}catch(e){} } }
+}
+const subnav = (group, items) => `<div class="subnav" role="tablist">${items.map(([id,l])=>`<button data-sub="${group}:${id}" aria-pressed="${S.sub[group]===id}">${l}</button>`).join('')}</div>`;
+
+function renderNews(){
+  const items=newsItems(); if(!items.length) return '';
+  const o=other(), N=names();
+  let h=`<div class="feed"><h2>Nové zápisy: ${esc(N[o])} <small>${items.length} ${pl(items.length,'změna','změny','změn')}</small></h2><ul>`;
+  items.slice(0,5).forEach(t=>{ const ed=(t.changedAt||0)>(t.createdAt||0)+2000;
+    h+=`<li><span>${ed?'Upraveno: ':''}${esc(t.note||(CAT[t.cat]||{}).n||'')}${t.comment?' 💬':''}</span><span class="num">${t.type==='prijem'?'+':'−'}${kc(t.amount)}</span></li>`; });
+  if(items.length>5) h+=`<li><span class="muted">a dalších ${items.length-5}</span><span></span></li>`;
+  return h+`</ul><button class="btn sm" data-act="seen">Mám přečteno</button></div>`;
+}
+
+function donutSvg(rows,total){
+  const R=56, C=2*Math.PI*R; let off=0, segs='';
+  rows.forEach(r=>{ const len=r.amt/total*C; segs+=`<circle r="${R}" cx="75" cy="75" fill="none" stroke="${r.c.c}" stroke-width="22" stroke-dasharray="${Math.max(0,len-1.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 75 75)"><title>${r.c.n}: ${kc(r.amt)}</title></circle>`; off+=len; });
+  return `<svg viewBox="0 0 150 150" role="img" aria-label="Výdaje podle kategorií"><circle r="${R}" cx="75" cy="75" fill="none" class="grid-l" stroke-width="22"/>${segs}
+    <text x="75" y="72" text-anchor="middle" class="chart-muted" font-size="11">výdaje</text>
+    <text x="75" y="90" text-anchor="middle" class="chart-ink" font-size="15" font-weight="700" font-family="Bricolage Grotesque, system-ui">${tis(total)}</text></svg>`;
+}
+function niceStep(raw){ const p=Math.pow(10,Math.floor(Math.log10(Math.max(1,raw/2)))); for(const s of [1,2,2.5,5,10]) if(s*p*2>=raw) return s*p; return 10*p; }
+function lineSvg(series, opts){
+  // series: [{pts:[{x,y}], color, dash, area, dot}], x domain [x0,x1]
+  const W=320,H=170,L=44,R=12,T=12,B=24;
+  const xs=series.flatMap(s=>s.pts.map(p=>p.x)), ys=series.flatMap(s=>s.pts.map(p=>p.y));
+  const x0=opts.x0??Math.min(...xs), x1=opts.x1??Math.max(...xs);
+  const lo=Math.min(0,...ys), raw=Math.max(1000,...ys)-lo; const step=niceStep(raw); const y0=lo<0?-Math.ceil(-lo/step)*step:0; const ymax=y0+step*Math.max(2,Math.ceil(raw/step));
+  const x=v=>L+(x1===x0?0:(v-x0)/(x1-x0))*(W-L-R), y=v=>T+(1-(v-y0)/(ymax-y0))*(H-T-B);
+  let g='';
+  for(let v=y0; v<=ymax+1; v+=step){ g+=`<line x1="${L}" x2="${W-R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="grid-l" stroke-width="1"/><text x="${L-6}" y="${(y(v)+4).toFixed(1)}" text-anchor="end" font-size="10" class="chart-muted">${v?tis(v):'0'}</text>`; }
+  (opts.xticks||[]).forEach(([v,l])=>{ g+=`<text x="${x(v).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10" class="chart-muted">${l}</text>`; });
+  let s='';
+  series.forEach(se=>{ if(!se.pts.length) return; const d=se.pts.map((p,i)=>(i?'L':'M')+x(p.x).toFixed(1)+' '+y(p.y).toFixed(1)).join(' ');
+    if(se.area && se.pts.length>1) s+=`<path d="${d} L${x(se.pts[se.pts.length-1].x).toFixed(1)} ${y(Math.max(0,y0)).toFixed(1)} L${x(se.pts[0].x).toFixed(1)} ${y(Math.max(0,y0)).toFixed(1)} Z" fill="${se.color}" opacity=".12"/>`;
+    s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.dash?1.6:2.4}" ${se.dash?'stroke-dasharray="4 4"':''} stroke-linejoin="round"/>`;
+    if(se.dot){ const p=se.pts[se.pts.length-1]; s+=`<circle cx="${x(p.x).toFixed(1)}" cy="${y(p.y).toFixed(1)}" r="4" fill="${se.color}"/>`; } });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(opts.label||'Graf')}">${g}${s}</svg>`;
+}
+
+function renderOverview(){
+  if(!S.demo && !D().tx.length && !D().fixed.length && !D().accounts.length) return `<section class="card" style="margin-top:4px"><h2>Začínáme</h2><p class="p">Rozpočet je zatím prázdný. Nejrychlejší start:</p>
+    <div class="list"><button class="tx" data-goto="vice:nastaveni" style="grid-template-columns:1fr auto"><span class="mid"><b>Nahrát zálohu</b><small>Fixy a nastavení z předchozí verze (soubor JSON)</small></span><span>›</span></button>
+    <button class="tx" data-goto="plan:jmeni" style="grid-template-columns:1fr auto"><span class="mid"><b>Přidat účty</b><small>Fio běžný, Fio spořicí, RB běžný, RB spořicí</small></span><span>›</span></button>
+    <button class="tx" data-goto="vice:import" style="grid-template-columns:1fr auto"><span class="mid"><b>Načíst výpis z banky</b><small>CSV z Fio nebo Raiffeisenbank</small></span><span>›</span></button>
+    <button class="tx" data-act="add" style="grid-template-columns:1fr auto"><span class="mid"><b>Zapsat první výdaj</b><small>Nebo klepni na + vpravo dole</small></span><span>›</span></button></div></section>`;
+  const k=S.month, st=monthStats(k), prev=monthStats(shiftM(k,-1)), isCur=k===mkey(today()), N=names();
+  const bal=st.inc-st.out, delta=prev.out?Math.round((st.out-prev.out)/prev.out*100):null, savePct=st.inc?Math.round(bal/st.inc*100):null;
+  let h=renderNews();
+  // shrnutí minulého měsíce
+  if(isCur && new Date().getDate()<=7){ const pm=shiftM(k,-1), ps=monthStats(pm); if(ps.inc||ps.out) h+=`<div class="alert info" style="margin-top:4px"><span class="ico">✦</span><div><b>Shrnutí ${mGen(pm)} je hotové</b><span>Ušetřili jste ${kc(ps.inc-ps.out)}.</span><br><button class="lnk" data-goto="vice:shrnuti" data-sm="${pm}">Zobrazit shrnutí</button></div></div>`; }
+  const due=isCur?dueList():[];
+  if(due.length){
+    h+=`<section class="card"><h2>Platby k potvrzení <small>potvrď, až se stáhnou</small></h2><div class="list">`;
+    due.forEach(x=>{ h+=`<div class="tx" style="grid-template-columns:1fr auto;${x.d<0?'border-color:var(--over)':''}"><span class="mid"><b>${esc(x.f.name)} · <span class="num">${kc(x.f.amount)}</span></b><small style="${x.d<0?'color:var(--over);font-weight:600':x.d===0?'color:var(--warn);font-weight:600':''}">${x.f.day}. ${+x.date.slice(5,7)}. · ${dueLabel(x.d)}</small></span><button class="btn sm" data-pay="${esc(x.f.id)}">Strženo</button></div>`; });
+    h+=`</div></section>`;
+  }
+  let perday='';
+  if(isCur && st.inc>0){
+    const pendFix=fixedSorted().filter(f=>!fixDone(k,f)).reduce((a,f)=>a+(+f.amount||0),0);
+    const reserve=D().sinking.reduce((a,s)=>a+sinkNeed(s),0);
+    const free=st.inc-st.out-pendFix-reserve, dl=daysIn(k)-new Date().getDate()+1;
+    perday=`<div class="perday"><small>${free>=0?`Na den zbývá (${dl} ${pl(dl,'den','dny','dní')}, fixy a rezervy odečtené)`:'Měsíc je v minusu'}</small><b class="num">${free>=0?kc(free/dl):kc(free)}</b></div>`;
+  }
+  h+=`<div class="hero" style="margin-top:${h?14:4}px">
+    <div><div class="lab">Zbývá z ${mGen(k)}</div><div class="big num">${kc(bal)}</div></div>
+    <div class="row three"><div><small>Příjmy</small><b class="num">${tis(st.inc)}</b></div><div><small>Výdaje</small><b class="num">${tis(st.out)}</b></div><div><small>Ušetřeno</small><b class="num">${savePct===null?'—':savePct+' %'}</b></div></div>
+    ${perday}
+    ${delta!==null?`<small>Výdaje ${delta>0?'o '+delta+' % vyšší':delta<0?'o '+Math.abs(delta)+' % nižší':'stejné'} než minulý měsíc</small>`:''}
+  </div>`;
+  const al=alertsFor();
+  if(al.length){ h+=`<div class="alerts">`; al.forEach(a=>{ const act={writefix:'Zapsat teď',addinc:'Zapsat příjem',settle:'Otevřít vyrovnání'}[a.act];
+    h+=`<div class="alert ${a.lvl}"><span class="ico">${a.ico}</span><div><b>${esc(a.t)}</b><span>${esc(a.s)}</span>${act?`<br><button class="lnk" data-act="${a.act}">${act}</button>`:''}</div></div>`; }); h+=`</div>`; }
+
+  D().accounts.forEach(a=>{ if(a.cond) h+=condCard(a,k); });
+  const lim=D().settings.limits||{};
+  const rows=EXP.map(c=>({c,amt:st.byCat[c.id]||0,lim:+lim[c.id]||0})).filter(r=>r.amt>0||r.lim>0).sort((a,b)=>b.amt-a.amt);
+  const spent=rows.filter(r=>r.amt>0);
+  if(spent.length){
+    const top=spent.slice(0,5), rest=spent.slice(5).reduce((a,r)=>a+r.amt,0);
+    h+=`<section class="card"><h2>Kam peníze šly</h2><div class="donut">${donutSvg(spent,st.out)}<div class="lg">`;
+    top.forEach(r=>{ h+=`<div><span><i class="dot" style="background:${r.c.c}"></i>${r.c.n}</span><span class="num">${Math.round(r.amt/st.out*100)} %</span></div>`; });
+    if(rest) h+=`<div><span><i class="dot" style="background:var(--line)"></i>Ostatní kategorie</span><span class="num">${Math.round(rest/st.out*100)} %</span></div>`;
+    h+=`</div></div></section>`;
+  }
+  h+=`<section class="card"><h2>Obálky a kategorie <small>${rows.some(r=>r.lim)?'':'obálky nastavíš v Plánu'}</small></h2><div class="cats">`;
+  if(!rows.length) h+=`<p class="p">Tento měsíc zatím bez výdajů.</p>`;
+  const max=Math.max(1,...rows.map(r=>Math.max(r.amt,r.lim)));
+  rows.forEach(r=>{ let cls='',w,col=r.c.c,txt='';
+    if(r.lim){ const p=r.amt/r.lim; w=Math.min(100,p*100); if(p>1){cls='over';col='var(--over)'} else if(p>=.85){cls='warn';col='var(--warn)'} txt=p>1?`Přečerpáno o ${kc(r.amt-r.lim)}`:`V obálce zbývá ${kc(r.lim-r.amt)} z ${kc(r.lim)}`; }
+    else w=r.amt/max*100;
+    h+=`<div class="cat ${cls}"><div class="t"><span><i class="dot" style="background:${r.c.c}"></i>${r.c.n}</span><span class="num">${kc(r.amt)}</span></div><div class="bar"><i style="width:${w}%;background:${col}"></i></div>${txt?`<div class="lim num">${txt}</div>`:''}</div>`; });
+  h+=`</div></section>`;
+  if(st.out||prev.out){
+    const cur=cumulative(k), pv=cumulative(shiftM(k,-1)), upto=isCur?new Date().getDate():cur.length, n=Math.max(cur.length,pv.length);
+    h+=`<section class="card"><h2>Průběh výdajů <small><span style="color:var(--accent)">━</span> ${MSHORT[mi(k)]} &nbsp;<span style="color:var(--muted)">┅</span> minulý měsíc</small></h2>${lineSvg([
+      {pts:pv.map((v,i)=>({x:i+1,y:v})),color:'var(--muted)',dash:true},
+      {pts:cur.slice(0,upto).map((v,i)=>({x:i+1,y:v})),color:'var(--accent)',area:true,dot:true}],{x0:1,x1:n,xticks:[[1,'1.'],[10,'10.'],[20,'20.'],[n,n+'.']],label:'Průběh výdajů v měsíci'})}</section>`;
+  }
+  if(st.out){
+    h+=`<section class="card"><h2>Kdo platil</h2><div class="stack">`;
+    ['a','b','spol'].forEach(w=>{ if(st.byWho[w]) h+=`<i style="width:${st.byWho[w]/st.out*100}%;background:${WHO_COL[w]}"></i>`; });
+    h+=`</div><div class="legend">${['a','b','spol'].map(w=>`<span><i class="dot" style="background:${WHO_COL[w]}"></i>${esc(N[w])} <b class="num">${kc(st.byWho[w]||0)}</b></span>`).join('')}</div></section>`;
+  }
+  const ms=[]; for(let i=5;i>=0;i--) ms.push(shiftM(k,-i));
+  const sts=ms.map(monthStats), mx=Math.max(1,...sts.map(s=>Math.max(s.inc,s.out)));
+  h+=`<section class="card"><h2>Posledních 6 měsíců <small><span style="color:var(--in)">■</span> příjmy &nbsp;<span style="color:var(--out)">■</span> výdaje</small></h2><div class="trend">`;
+  ms.forEach((x,i)=>{ const s=sts[i], net=s.inc-s.out; h+=`<div class="col ${x===k?'cur':''}" title="${mName(x)}: příjmy ${kc(s.inc)}, výdaje ${kc(s.out)}"><div class="bars"><i style="height:${s.inc/mx*100}%;background:var(--in)"></i><i style="height:${s.out/mx*100}%;background:var(--out)"></i></div><div class="m">${MSHORT[mi(x)]}</div><div class="net num" style="color:${net>=0?'var(--in)':'var(--over)'}">${s.inc||s.out?(net>=0?'+':'')+tis(net):''}</div></div>`; });
+  return h+`</div></section>`;
+}
+
+function txRow(t, news){
+  const N=names(), c=CAT[t.cat]||CAT.ostatni;
+  if(t.type==='prevod') return `<button class="tx" data-edit="${esc(t.id)}"><span class="ic" style="background:${CAT.prevod.c}">⇆</span><span class="mid"><b>${esc(t.note||'Převod')}</b><small>${esc(accName(t.from))} → ${esc(accName(t.to))}${t.fixedId?' · fix':''}</small></span><span class="amt num s">${kc(t.amount)}</span></button>`;
+  if(t.type==='vyrovnani') return `<button class="tx" data-edit="${esc(t.id)}"><span class="ic" style="background:${c.c}">⇄</span><span class="mid"><b>Vyrovnání</b><small>${esc(N[t.from])} → ${esc(N[t.to])}</small></span><span class="amt num s">${kc(t.amount)}</span></button>`;
+  const tags=(t.tags||[]).map(g=>`<span class="tag">#${esc(g)}</span>`).join('');
+  return `<button class="tx" data-edit="${esc(t.id)}"><span class="ic" style="background:${c.c}">${c.k}</span>
+    <span class="mid"><b>${esc(t.note||c.n)}${news&&news.has(t.id)?'<i class="new-dot" aria-label="nové"></i>':''}</b><small>${c.n} · ${esc(N[t.who]||'')}${t.account&&D().accounts.length>1?' · '+esc(accName(t.account)):''}${t.shared?' · napůl':''}${t.by&&t.by!==t.who?' · zapsal'+(fem(N[t.by])?'a ':' ')+esc(N[t.by]):''}</small>${t.items&&t.items.length?`<em>Účtenka: ${esc(t.items.slice(0,3).join(', '))}${t.items.length>3?` a ${t.items.length-3} další`:''}</em>`:''}${t.comment?`<em>💬 ${esc(t.comment)}</em>`:''}${tags?`<small>${tags}</small>`:''}</span>
+    <span class="amt num ${t.type==='prijem'?'i':'o'}">${t.type==='prijem'?'+':'−'}${kc(t.amount)}${t.shared&&t.who!=='spol'?`<small>${kc(t.amount/2)} / os.</small>`:''}</span></button>`;
+}
+
+function renderList(){
+  const F=S.filter, N=names(), q=F.q.trim().toLowerCase();
+  let h=`<div class="btnrow" style="margin:4px 0 10px"><button class="btn" data-act="receipt">Nahrát účtenku</button><button class="btn ghost" data-act="transfer">Převod mezi účty</button></div><div class="filters"><input class="search" id="fq" type="search" placeholder="Hledat (i položky z účtenek), nebo #štítek" value="${esc(F.q)}" aria-label="Hledat">
+    <div class="seg three" id="fType" style="margin:0"><button data-v="vse" aria-pressed="${F.type==='vse'}">Vše</button><button data-v="vydaj" aria-pressed="${F.type==='vydaj'}">Výdaje</button><button data-v="prijem" aria-pressed="${F.type==='prijem'}">Příjmy</button></div>
+    <div class="frow"><select id="fCat" aria-label="Kategorie"><option value="">Všechny kategorie</option>${[...EXP,...INC].map(c=>`<option value="${c.id}" ${F.cat===c.id?'selected':''}>${c.n}</option>`).join('')}</select>
+    <select id="fWho" aria-label="Kdo"><option value="">Všichni</option>${['a','b','spol'].map(w=>`<option value="${w}" ${F.who===w?'selected':''}>${esc(N[w])}</option>`).join('')}</select></div>
+    ${D().accounts.length?`<select id="fAcc" aria-label="Účet" style="border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;width:100%"><option value="">Všechny účty</option>${D().accounts.filter(a=>a.kind!=='dluh').map(a=>`<option value="${a.id}" ${F.acc===a.id?'selected':''}>${esc(a.name)}</option>`).join('')}</select>`:''}</div>`;
+  const tagQ = q.startsWith('#') ? q.slice(1) : null;
+  const searching=q||F.cat||F.who||F.type!=='vse';
+  const list=(q?D().tx:D().tx.filter(t=>mkey(t.date)===S.month)).filter(t=>
+    (F.type==='vse'||t.type===F.type) && (!F.cat||t.cat===F.cat) && (!F.who||t.who===F.who) && (!F.acc||t.account===F.acc||t.from===F.acc||t.to===F.acc) &&
+    (!q || (tagQ!==null ? (t.tags||[]).some(g=>g.toLowerCase().startsWith(tagQ)) : ((t.note||'')+' '+(t.comment||'')+' '+((CAT[t.cat]||{}).n||'')+' '+(t.tags||[]).join(' ')+' '+(t.items||[]).join(' ')).toLowerCase().includes(q))));
+  if(!list.length) return h+`<div class="empty"><h3>${searching?'Nic nenalezeno':'V tomhle měsíci nic'}</h3><p>${searching?'Zkus jiný filtr.':'Pohyby z jiných měsíců najdeš šipkami nahoře.'}</p>${searching?'':'<button class="btn" data-act="add">Zapsat pohyb</button>'}</div>`;
+  const outSum=list.filter(t=>t.type==='vydaj').reduce((a,t)=>a+t.amount,0), inSum=list.filter(t=>t.type==='prijem').reduce((a,t)=>a+t.amount,0);
+  h+=`<div class="sum-line num"><span>${list.length} ${pl(list.length,'pohyb','pohyby','pohybů')}${q?' · celá historie':''}</span><span>${inSum?'+'+kc(inSum)+' · ':''}−${kc(outSum)}</span></div>`;
+  const news=new Set(newsItems().map(t=>t.id));
+  const sorted=[...list].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  const daySum={}; sorted.forEach(t=>{ if(t.type==='vydaj') daySum[t.date]=(daySum[t.date]||0)+t.amount; });
+  h+='<div class="list">'; let last='';
+  sorted.forEach(t=>{ if(t.date!==last){ last=t.date; const d=new Date(t.date+'T12:00'); h+=`<div class="day"><span>${DAYS[d.getDay()]} ${d.getDate()}. ${d.getMonth()+1}.${q&&d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():''}</span><span class="num">${daySum[t.date]?'−'+kc(daySum[t.date]):''}</span></div>`; } h+=txRow(t,news); });
+  return h+'</div>';
+}
+
+function renderFixed(){
+  const fs=fixedSorted(), N=names(), tot=fixedTotal(), pending=fs.filter(f=>!fixDone(S.month,f)), inc=monthStats(S.month).inc;
+  const subs=fs.filter(f=>f.cat==='predplatne').reduce((a,f)=>a+f.amount,0);
+  let h=`<div class="hero" style="margin-top:4px"><div><div class="lab">Fixní náklady měsíčně</div><div class="big num">${kc(tot)}</div></div>
+    <div class="row three"><div><small>Ročně</small><b class="num">${tis(tot*12)}</b></div><div><small>Z příjmů</small><b class="num">${inc?Math.round(tot/inc*100)+' %':'—'}</b></div><div><small>Předplatné / rok</small><b class="num">${tis(subs*12)}</b></div></div>
+    ${pending.length?`<div class="perday"><small>Nezapsáno za ${mName(S.month)}</small><b class="num">${kc(pending.reduce((a,f)=>a+(+f.amount||0),0))}</b></div>`:''}</div>`;
+  if(pending.length) h+=`<button class="btn wide mt" data-act="writefix">Zapsat ${pending.length} ${pl(pending.length,'položku','položky','položek')} za ${mName(S.month)}</button>`;
+  if(fs.length){ const by={}; fs.forEach(f=>by[f.cat]=(by[f.cat]||0)+(+f.amount||0)); const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+    h+=`<section class="card"><h2>Skladba fixů</h2><div class="stack">${rows.map(([c,a])=>`<i style="width:${a/tot*100}%;background:${(CAT[c]||CAT.ostatni).c}"></i>`).join('')}</div><div class="legend">${rows.map(([c,a])=>`<span><i class="dot" style="background:${(CAT[c]||CAT.ostatni).c}"></i>${(CAT[c]||CAT.ostatni).n} <b class="num">${kc(a)}</b></span>`).join('')}</div></section>`; }
+  h+=`<section class="card"><h2>Seznam <small>klepnutím upravíš</small></h2><div class="list">`;
+  fs.forEach(f=>{ const c=CAT[f.cat]||CAT.ostatni, ok=fixDone(S.month,f); const cur=mkey(today())===S.month; const dd=f.day&&cur?daysUntil(dueDate(S.month,f)):null; const ph=(f.priceHistory||[]).slice(-1)[0];
+    h+=`<button class="tx" data-fix="${esc(f.id)}"><span class="ic" style="background:${c.c}">${c.k}</span><span class="mid"><b>${esc(f.name)}</b><small>${f.day?`${f.toAccount?'převádí se':'strhává se'} ${f.day}. · `:''}${f.toAccount?'na '+esc(accName(f.toAccount))+' · ':''}${esc(N[f.who]||'')} · ${ok?'<span style="color:var(--in)">zaplaceno</span>':dd!==null?(dd<0?'<span style="color:var(--over)">po splatnosti</span>':dueLabel(dd)):'nezapsáno'}</small>${ph?`<small>${ph.to>ph.from?'zdraženo':'zlevněno'} z ${kc(ph.from)}</small>`:''}</span><span class="amt num o">${kc(f.amount)}</span></button>`; });
+  return h+`</div><button class="btn ghost wide mt" data-act="newfix">Nová fixní položka</button></section>`;
+}
+
+/* ---------- Plán ---------- */
+function renderPlan(){
+  let h=subnav('plan',[['rozdeleni','Rozdělení'],['obalky','Obálky'],['cile','Cíle'],['velke','Velké výdaje'],['simulace','Simulace'],['jmeni','Účty']]);
+  const s=S.sub.plan;
+  if(s==='rozdeleni') h+=planSplit(); else if(s==='obalky') h+=planEnvelopes(); else if(s==='cile') h+=planGoals(); else if(s==='velke') h+=planSinking(); else if(s==='simulace') h+=planSim(); else h+=planNet();
+  return h;
+}
+function planSplit(){
+  const st=monthStats(S.month), avg=avgMonths(3); const inc=st.inc||avg.inc;
+  const fx=fixedTotal(), env=Object.values(D().settings.limits||{}).reduce((a,b)=>a+(+b||0),0), sink=D().sinking.reduce((a,s)=>a+sinkNeed(s),0), goals=D().goals.reduce((a,g)=>a+goalNeed(g),0);
+  const free=inc-fx-env-sink-goals;
+  const parts=[['Fixní náklady',fx,'#4F6BED'],['Obálky',env,'#2F9E6E'],['Velké výdaje',sink,'#C9A227'],['Cíle',goals,'#0E6B57']];
+  let h=`<div class="hero"><div><div class="lab">Nerozděleno z ${mGen(S.month)}</div><div class="big num">${kc(free)}</div></div><small>${st.inc?'Z příjmů za tento měsíc':'Příjmy zatím nezapsané, počítám s průměrem '+avg.n+' '+pl(avg.n,'měsíce','měsíců','měsíců')}: ${kc(inc)}</small></div>
+    <section class="card"><h2>Kam půjde výplata</h2><div class="stack" style="height:16px">${parts.map(([l,v,c])=>v>0&&inc>0?`<i style="width:${Math.min(100,v/inc*100)}%;background:${c}" title="${l}"></i>`:'').join('')}</div>
+    <div class="kv mt"><div><span>Příjmy</span><b class="num">${kc(inc)}</b></div>${parts.map(([l,v,c])=>`<div><span><i class="dot" style="background:${c}"></i>${l}</span><span class="num">−${kc(v)}</span></div>`).join('')}<div class="total"><span>${free>=0?'Volné peníze':'Chybí'}</span><span class="num" style="color:${free>=0?'var(--in)':'var(--over)'}">${kc(free)}</span></div></div>
+    <p class="p mt">${free>=0?`Volné peníze můžete poslat do cíle, třeba do „${esc((D().goals[0]||{}).name||'rezervy')}“.`:'Plán je přeplněný. Uberte z obálek nebo posuňte termín cíle.'}</p>
+    ${free>0&&D().goals.length?`<button class="btn wide" data-act="freetogoal">Poslat ${kc(free)} do cíle</button>`:''}</section>`;
+  return h;
+}
+function planEnvelopes(){
+  const lim=D().settings.limits||{}, st=monthStats(S.month);
+  const avg={}; for(let i=1;i<=3;i++){ const s=monthStats(shiftM(mkey(today()),-i)); EXP.forEach(c=>avg[c.id]=(avg[c.id]||0)+(s.byCat[c.id]||0)/3); }
+  const fixBy={}; D().fixed.forEach(f=>fixBy[f.cat]=(fixBy[f.cat]||0)+f.amount);
+  const total=Object.values(lim).reduce((a,b)=>a+(+b||0),0);
+  let h=`<section class="card"><h2>Obálky na ${mName(S.month)} <small class="num">celkem ${kc(total)}</small></h2><p class="p">Kolik chcete měsíčně utratit za proměnlivé výdaje. Fixy se do obálek nepočítají.</p>`;
+  EXP.forEach(c=>{ const spentVar=(st.byCat[c.id]||0)-(D().tx.filter(t=>t.fixedId&&t.cat===c.id&&mkey(t.date)===S.month).reduce((a,t)=>a+t.amount,0));
+    h+=`<div class="limrow"><span><i class="dot" style="background:${c.c}"></i><span>${c.n}<small class="num">${avg[c.id]?'průměr '+kc(avg[c.id]-(fixBy[c.id]||0)>0?avg[c.id]-(fixBy[c.id]||0):0):'bez výdajů'}${lim[c.id]?' · teď '+kc(Math.max(0,spentVar)):''}</small></span></span><input id="lim-${c.id}" inputmode="numeric" placeholder="—" value="${lim[c.id]?esc(lim[c.id]):''}" aria-label="Obálka ${c.n}"></div>`; });
+  return h+`<div class="btnrow"><button class="btn ghost" data-act="envavg">Vyplnit podle průměru</button><button class="btn" data-act="saveenv">Uložit obálky</button></div></section>`;
+}
+function planGoals(){
+  const g=D().goals, tot=g.reduce((a,x)=>a+(+x.saved||0),0), tgt=g.reduce((a,x)=>a+(+x.target||0),0);
+  let h=g.length?`<div class="hero"><div><div class="lab">Našetřeno do cílů</div><div class="big num">${kc(tot)}</div></div><small>z ${kc(tgt)} · měsíčně odkládat ${kc(g.reduce((a,x)=>a+goalNeed(x),0))}</small></div>`:'';
+  h+=`<section class="card"><h2>Na co spoříme</h2>`;
+  if(!g.length) h+=`<p class="p">Přidej cíl, třeba rezervu nebo rekonstrukci. S termínem spočítám, kolik odkládat měsíčně.</p>`;
+  [...g].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{ const pct=x.target?Math.min(100,x.saved/x.target*100):0; let hint,hc='';
+    if(x.saved>=x.target) hint='Hotovo, cíl je splněný.';
+    else if(x.deadline){ const left=monthsBetween(mkey(today()),x.deadline); if(left<=0){hint=`Termín ${mName(x.deadline)} ${x.deadline.slice(0,4)} už minul.`;hc='warn';} else hint=`Do ${mGen(x.deadline)} ${x.deadline.slice(0,4)} odkládat ${kc(goalNeed(x))} měsíčně (${left} ${pl(left,'měsíc','měsíce','měsíců')}).`; }
+    else hint=`Chybí ${kc(x.target-x.saved)}. Přidej termín a spočítám měsíční částku.`;
+    h+=`<div class="goal"><div class="t"><b>${esc(x.name)}</b><span class="num muted">${Math.round(pct)} %</span></div><div class="bar" style="height:10px"><i style="width:${pct}%;background:var(--accent)"></i></div><div class="t num"><span>${kc(x.saved)}</span><span class="muted">z ${kc(x.target)}</span></div><div class="hint ${hc}">${hint}</div><div class="acts"><button class="btn" data-dep="goals:${esc(x.id)}">Připsat částku</button><button class="btn ghost" data-goal="${esc(x.id)}">Upravit</button></div></div>`; });
+  return h+`<button class="btn ghost wide mt" data-act="newgoal">Nový cíl</button></section>`;
+}
+function planSinking(){
+  const ss=[...D().sinking].sort((a,b)=>a.due.localeCompare(b.due)), m=ss.reduce((a,s)=>a+sinkNeed(s),0);
+  let h=`<div class="hero"><div><div class="lab">Odkládat měsíčně</div><div class="big num">${kc(m)}</div></div><small>Velké výdaje rozpočítané do měsíců, ať vás nepřekvapí.</small></div><section class="card"><h2>Velké výdaje dopředu</h2>`;
+  if(!ss.length) h+=`<p class="p">Pojištění auta, Vánoce, STK nebo dovolená. Zadej částku a měsíc a appka spočítá, kolik odkládat.</p>`;
+  const byAcc={}; ss.forEach(s=>{ if(s.account) byAcc[s.account]=(byAcc[s.account]||0)+(s.saved||0); });
+  const recon=Object.entries(byAcc).map(([id,sv])=>{ const a=D().accounts.find(x=>x.id===id); if(!a) return ''; const bal=accVal(a), diff=bal-sv;
+    return `<div class="alert ${diff<-1?'warn':'info'}" style="margin-bottom:12px"><span class="ico">${diff<-1?'!':'✓'}</span><div><b>${esc(a.name)}: ${kc(bal)}</b><span>Rozděleno do velkých výdajů ${kc(sv)}. ${diff>=1?`Nepřiděleno ${kc(diff)}, můžeš je rozdělit níže.`:diff<-1?`Na účtu chybí ${kc(-diff)} oproti plánu.`:'Sedí to přesně.'}</span></div></div>`; }).join('');
+  h+=recon;
+  ss.forEach(s=>{ const left=monthsBetween(mkey(today()),s.due), pct=Math.min(100,(s.saved||0)/s.amount*100);
+    h+=`<div class="goal"><div class="t"><b>${esc(s.name)}</b><span class="num muted">${mName(s.due)} ${s.due.slice(0,4)}</span></div><div class="bar" style="height:10px"><i style="width:${pct}%;background:#C9A227"></i></div><div class="t num"><span>${kc(s.saved||0)}${s.account?` <small class="muted">na ${esc(accName(s.account))}</small>`:''}</span><span class="muted">z ${kc(s.amount)}</span></div><div class="hint ${left<=1&&pct<100?'warn':''}">${pct>=100?'Odloženo celé.':left<=0?'Splatné teď.':`Odkládat ${kc(sinkNeed(s))} měsíčně, zbývá ${left} ${pl(left,'měsíc','měsíce','měsíců')}.`}</div><div class="acts"><button class="btn" data-dep="sinking:${esc(s.id)}">Odložit</button><button class="btn ghost" data-sink="${esc(s.id)}">Upravit</button></div></div>`; });
+  return h+`<button class="btn ghost wide mt" data-act="newsink">Nový velký výdaj</button></section>`;
+}
+function planSim(){
+  const avg=avgMonths(3);
+  return `<section class="card"><h2>Co kdyby… <small>průměr za ${avg.n} ${pl(avg.n,'měsíc','měsíce','měsíců')}</small></h2>
+    <p class="p">Dnes průměrně: příjmy ${kc(avg.inc)}, výdaje ${kc(avg.out)}, zbývá ${kc(avg.inc-avg.out)} měsíčně.</p>
+    <div class="chips" id="simPresets"><button data-p="rodicovska">Rodičovská</button><button data-p="hypoteka">Hypotéka</button><button data-p="auto">Nové auto</button><button data-p="vyplata">Přidaná výplata</button></div>
+    <div class="grid2"><div class="field"><label for="simInc">Změna příjmů / měs.</label><input id="simInc" inputmode="numeric" value="${esc(S.sim?.inc??'-20000')}"></div><div class="field"><label for="simOut">Změna výdajů / měs.</label><input id="simOut" inputmode="numeric" value="${esc(S.sim?.out??'3000')}"></div></div>
+    <div class="grid2"><div class="field"><label for="simMonths">Na kolik měsíců</label><input id="simMonths" inputmode="numeric" value="${esc(S.sim?.months??'12')}"></div><div class="field"><label for="simOnce">Jednorázově na začátku</label><input id="simOnce" inputmode="numeric" value="${esc(S.sim?.once??'0')}"></div></div>
+    <div class="sim-out" id="simOut2"></div></section>`;
+}
+function simCalc(){
+  const avg=avgMonths(3), di=parseAmt($('#simInc').value)||0, dout=parseAmt($('#simOut').value)||0, n=Math.max(1,parseInt($('#simMonths').value)||12), once=parseAmt($('#simOnce').value)||0;
+  S.sim={inc:$('#simInc').value,out:$('#simOut').value,months:$('#simMonths').value,once:$('#simOnce').value};
+  const base=avg.inc-avg.out, nw=base+di-dout, total=nw*n-once;
+  const liquid=D().accounts.filter(a=>a.kind==='ucet'||a.kind==='sporeni').reduce((s,a)=>s+accVal(a),0);
+  const lasts = nw<0 ? Math.floor((liquid-once)/(-nw)) : null;
+  $('#simOut2').innerHTML=`<div class="kv"><div><span>Měsíčně zbude</span><b class="num" style="color:${nw>=0?'var(--in)':'var(--over)'}">${kc(nw)}</b></div><div><span>Za ${n} ${pl(n,'měsíc','měsíce','měsíců')} celkem</span><b class="num" style="color:${total>=0?'var(--in)':'var(--over)'}">${kc(total)}</b></div><div><span>Oproti dnešku</span><span class="num">${kc((nw-base)*n-once)}</span></div>${nw<0?`<div><span>Úspory na účtech vystačí</span><b class="num">${lasts>0?lasts+' '+pl(lasts,'měsíc','měsíce','měsíců'):'nevystačí'}</b></div>`:''}</div>
+    <p class="p mt">${nw>=0?'S takovou změnou pořád vycházíte v plusu.':'S takovou změnou budete každý měsíc brát z úspor. Zkuste ubrat z obálek v Plánu.'}</p>`;
+}
+function planNet(){
+  const acc=D().accounts, nw=netWorth();
+  const ends=[]; for(let i=5;i>=1;i--){ const k=shiftM(mkey(today()),-i); ends.push(k+'-'+pad(daysIn(k))); } ends.push(today());
+  const pts=ends.map(d=>({x:new Date(d+'T12:00').getTime(),y:netWorth(d),has:acc.some(a=>accBalanceAt(a,d)!=null)})).filter(p=>p.has);
+  const first=pts[0], chg=first?nw-first.y:0, intM=acc.reduce((s,a)=>s+(a.kind==='sporeni'?interestM(a):0),0);
+  let h=`<div class="hero"><div><div class="lab">Čisté jmění</div><div class="big num">${kc(nw)}</div></div>
+    <div class="row"><div><small>Za půl roku</small><b class="num">${pts.length>1?(chg>=0?'+':'')+tis(chg):'—'}</b></div><div><small>Úroky měsíčně</small><b class="num">${intM?'+'+kc(intM):'—'}</b></div></div></div>`;
+  if(pts.length>1) h+=`<section class="card"><h2>Vývoj <small>konec měsíce</small></h2>${lineSvg([{pts,color:'var(--accent)',area:true,dot:true}],{xticks:pts.map(p=>[p.x,MSHORT[new Date(p.x).getMonth()]]).filter((_,i,arr)=>i%2===0||i===arr.length-1),label:'Vývoj čistého jmění'})}</section>`;
+  acc.forEach(a=>{ if(a.cond) h+=condCard(a,mkey(today())); });
+  h+=`<section class="card"><h2>Účty <small>zůstatek se dopočítává z pohybů</small></h2><div class="list">`;
+  acc.forEach(a=>{ const v=accVal(a), pm=shiftM(mkey(today()),-1), prev=accBalanceAt(a,pm+'-'+pad(daysIn(pm))), cs=condStatus(a,mkey(today()));
+    const sub=[ACC_KIND[a.kind]]; if(a.rate) sub.push(String(a.rate).replace('.',',')+' % p.a.'); if(cs) sub.push(`${cs.n}/${cs.min} plateb`); if(a.purpose) sub.push(a.purpose);
+    h+=`<button class="tx" data-acc="${esc(a.id)}"><span class="ic" style="background:${a.kind==='dluh'?'#C2362B':a.kind==='investice'?'#8C6BD6':a.kind==='sporeni'?'#0E7A4F':'#4F6BED'}">${esc((a.bank||{ucet:'ÚČ',sporeni:'SP',investice:'IN',dluh:'DL'}[a.kind]).slice(0,3))}</span><span class="mid"><b>${esc(a.name)}</b><small>${esc(sub.join(' · '))}</small></span><span class="amt num ${a.kind==='dluh'?'o':'i'}">${a.kind==='dluh'?'−':''}${kc(v)}${prev!=null&&Math.abs(v-prev)>=1?`<small>${v-prev>=0?'+':''}${kc(v-prev)} tento měsíc</small>`:''}</span></button>`; });
+  h+=`</div><div class="btnrow"><button class="btn ghost" data-act="transfer">Převod mezi účty</button><button class="btn ghost" data-act="newacc">Přidat účet</button></div>
+    <p class="p mt" style="font-size:.82rem">Zůstatek = poslední zadaný stav + pohyby a převody zapsané k účtu. Jednou za čas ho porovnej s bankou a klepnutím na účet oprav.</p></section>`;
+  return h;
+}
+
+/* ---------- Více ---------- */
+function renderVice(){
+  let h=subnav('vice',[['shrnuti','Shrnutí'],['rok','Rok'],['vyrovnani','Vyrovnání'],['stitky','Štítky'],['import','Import z banky'],['nastaveni','Nastavení']]);
+  const s=S.sub.vice;
+  if(s==='shrnuti') h+=viceSummary(); else if(s==='rok') h+=viceYear(); else if(s==='vyrovnani') h+=viceSettle(); else if(s==='stitky') h+=viceTags(); else if(s==='import') h+=viceImport(); else h+=viceSettings();
+  return h;
+}
+function viceSummary(){
+  const k=S.sumMonth, st=monthStats(k), pv=monthStats(shiftM(k,-1)), N=names(), lim=D().settings.limits||{};
+  let h=`<div class="month" style="justify-content:center;margin:4px 0 10px"><button data-sm="${shiftM(k,-1)}" aria-label="Předchozí">‹</button><span>${mName(k)} ${k.slice(0,4)}</span><button data-sm="${shiftM(k,1)}" aria-label="Další" ${k>=mkey(today())?'disabled':''}>›</button></div>`;
+  if(!st.inc&&!st.out) return h+`<div class="empty"><h3>Za ${mName(k)} nic není</h3><p>Shrnutí se poskládá z pohybů daného měsíce.</p></div>`;
+  const bal=st.inc-st.out, pct=st.inc?Math.round(bal/st.inc*100):0;
+  const top=Object.entries(st.byCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const deltas=EXP.map(c=>({c,d:(st.byCat[c.id]||0)-(pv.byCat[c.id]||0)})).sort((a,b)=>b.d-a.d);
+  const up=deltas[0], down=deltas[deltas.length-1];
+  const over=EXP.filter(c=>lim[c.id]&&(st.byCat[c.id]||0)>lim[c.id]);
+  const okEnv=EXP.filter(c=>lim[c.id]&&(st.byCat[c.id]||0)<=lim[c.id]);
+  const big=[...st.list].filter(t=>t.type==='vydaj'&&!t.fixedId).sort((a,b)=>b.amount-a.amount)[0];
+  h+=`<div class="hero"><div><div class="lab">${mName(k)} ${k.slice(0,4)}</div><div class="big num">${bal>=0?'+':''}${kc(bal)}</div></div><small>${bal>=0?`Ušetřili jste ${pct} % příjmů.`:'Utratili jste víc, než přišlo.'}</small></div>
+  <section class="card"><h2>Jak se vám dařilo</h2><div class="story">
+    <p>Přišlo <b class="num">${kc(st.inc)}</b> a odešlo <b class="num">${kc(st.out)}</b>, z toho fixy <span class="num">${kc(st.fixedOut)}</span>.</p>
+    <p>Nejvíc šlo na ${top.map(([c,a])=>`<b>${(CAT[c]||CAT.ostatni).n.toLowerCase()}</b> (${kc(a)})`).join(', ')}.</p>
+    ${pv.out?`<p>${up&&up.d>200?`Nejvíc narostly výdaje za <b>${up.c.n.toLowerCase()}</b>, o <span class="num">${kc(up.d)}</span> oproti ${mLoc(shiftM(k,-1))}.`:''} ${down&&down.d<-200?`Naopak <b>${down.c.n.toLowerCase()}</b> klesly o <span class="num">${kc(-down.d)}</span>.`:''}</p>`:''}
+    ${Object.keys(lim).length?`<p>${okEnv.length} ${pl(okEnv.length,'obálka vydržela','obálky vydržely','obálek vydrželo')}${over.length?`, přečerpané: ${over.map(c=>`<b>${c.n.toLowerCase()}</b>`).join(', ')}`:', žádná se nepřečerpala'}.</p>`:''}
+    ${big?`<p>Největší jednorázový výdaj: ${esc(big.note||CAT[big.cat].n)} za <span class="num">${kc(big.amount)}</span>.</p>`:''}
+    <p>Platby: ${esc(N.a)} ${kc(st.byWho.a)}, ${esc(N.b)} ${kc(st.byWho.b)}, společně ${kc(st.byWho.spol)}.</p>
+  </div></section>`;
+  return h;
+}
+function viceYear(){
+  const y=S.month.slice(0,4), N=names();
+  const months=[]; for(let m=1;m<=12;m++){ const k=y+'-'+pad(m); if(k<=mkey(today())) months.push(k); }
+  const sts=months.map(monthStats), withData=sts.filter(s=>s.inc||s.out).length||1;
+  const inc=sts.reduce((a,s)=>a+s.inc,0), out=sts.reduce((a,s)=>a+s.out,0);
+  const by={}; sts.forEach(s=>Object.entries(s.byCat).forEach(([c,a])=>by[c]=(by[c]||0)+a));
+  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]), mx=Math.max(1,...rows.map(r=>r[1]));
+  let h=`<div class="tiles"><div class="tile"><small>Příjmy ${y}</small><b class="num">${tis(inc)}</b></div><div class="tile"><small>Výdaje ${y}</small><b class="num">${tis(out)}</b></div><div class="tile"><small>Ušetřeno</small><b class="num" style="color:${inc-out>=0?'var(--in)':'var(--over)'}">${tis(inc-out)}</b></div></div>
+    <section class="card"><h2>Kolik co stojí ročně <small>${withData} ${pl(withData,'měsíc','měsíce','měsíců')} dat · ⌀ = průměr na měsíc</small></h2><div class="cats">`;
+  rows.forEach(([c,a])=>{ const cc=CAT[c]||CAT.ostatni, avg=a/withData; h+=`<div class="cat"><div class="t"><span><i class="dot" style="background:${cc.c}"></i>${cc.n}</span><span class="num">${kc(a)}</span></div><div class="bar"><i style="width:${a/mx*100}%;background:${cc.c}"></i></div><div class="lim num">⌀ ${kc(avg)} · za celý rok by to bylo ${kc(avg*12)}</div></div>`; });
+  if(!rows.length) h+=`<p class="p">Za ${y} zatím nic.</p>`;
+  h+=`</div></section>`;
+  // přepočet malých věcí
+  const pick=['restaurace','psi','predplatne','doprava'].filter(c=>by[c]).map(c=>`<div><span><i class="dot" style="background:${CAT[c].c}"></i>${CAT[c].n}</span><b class="num">${kc(by[c]/withData*12)}</b></div>`).join('');
+  const basket={}; (D().receipts||[]).filter(r=>r.date.startsWith(y)).forEach(r=>r.items.forEach(it=>{ const k=itemKey(it.name)||it.name; const b=basket[k]=basket[k]||{n:it.name,sum:0,cnt:0,cat:it.cat}; b.sum+=it.price; b.cnt++; }));
+  const topB=Object.values(basket).sort((a,b)=>b.sum-a.sum).slice(0,8);
+  if(topB.length) h+=`<section class="card"><h2>Nejvíc v košíku <small>z účtenek</small></h2><div class="kv">${topB.map(b=>`<div><span><i class="dot" style="background:${(CAT[b.cat]||CAT.ostatni).c}"></i>${esc(b.n)} <small class="muted">${b.cnt}×</small></span><b class="num">${kc(b.sum)}</b></div>`).join('')}</div></section>`;
+  if(pick) h+=`<section class="card"><h2>Za rok to dělá</h2><p class="p">Měsíčně to nevypadá dramaticky, ale za 12 měsíců:</p><div class="kv">${pick}</div></section>`;
+  return h;
+}
+function viceSettle(){
+  const owed=settlement(), N=names();
+  const shared=D().tx.filter(t=>(t.type==='vydaj'&&t.shared&&(t.who==='a'||t.who==='b'))||t.type==='vyrovnani').sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
+  let h=`<div class="hero"><div><div class="lab">Stav vyrovnání</div><div class="big num">${Math.abs(owed)<1?'Vyrovnáno':kc(Math.abs(owed))}</div></div><small>${Math.abs(owed)<1?'Nikdo nikomu nic nedluží.':owed>0?`${esc(N.b)} dluží ${esc(N.a)}`:`${esc(N.a)} dluží ${esc(N.b)}`}</small></div>
+    <section class="card"><h2>Jak to funguje</h2><p class="p">U výdaje zaplaceného ze svého zaškrtni „Dělíme napůl“. Appka počítá, kolik kdo komu dluží. Výdaje ze společného účtu se nepočítají.</p>
+    ${Math.abs(owed)>=1?`<button class="btn wide" data-act="dosettle">Zapsat vyrovnání ${kc(Math.abs(owed))}</button>`:''}</section>`;
+  if(shared.length){ h+=`<section class="card"><h2>Poslední sdílené výdaje</h2><div class="list">${shared.map(t=>txRow(t)).join('')}</div></section>`; }
+  return h;
+}
+function viceTags(){
+  const by={}; D().tx.forEach(t=>(t.tags||[]).forEach(g=>{ const k=g.toLowerCase(); by[k]=by[k]||{n:g,sum:0,cnt:0,from:t.date,to:t.date}; const o=by[k]; if(t.type==='vydaj') o.sum+=t.amount; o.cnt++; if(t.date<o.from)o.from=t.date; if(t.date>o.to)o.to=t.date; }));
+  const rows=Object.values(by).sort((a,b)=>b.to.localeCompare(a.to));
+  let h=`<section class="card"><h2>Štítky</h2><p class="p">Štítek spojí výdaje z různých kategorií, třeba celou dovolenou nebo oslavu. Přidáš ho při zápisu pohybu.</p>`;
+  if(!rows.length) h+=`<p class="p">Zatím žádné štítky.</p>`;
+  h+=`<div class="list">${rows.map(r=>`<button class="tx" data-tag="${esc(r.n)}" style="grid-template-columns:1fr auto"><span class="mid"><b>#${esc(r.n)}</b><small>${r.cnt} ${pl(r.cnt,'pohyb','pohyby','pohybů')} · ${new Date(r.from+'T12:00').toLocaleDateString('cs-CZ')}${r.to!==r.from?' – '+new Date(r.to+'T12:00').toLocaleDateString('cs-CZ'):''}</small></span><span class="amt num o">${kc(r.sum)}</span></button>`).join('')}</div></section>`;
+  return h;
+}
+function viceImport(){
+  let h=`<section class="card"><h2>Import výpisu z banky</h2><p class="p">Stáhni pohyby z Fio nebo Raiffeisenbank jako CSV a nahraj je sem. Kategorie se doplní samy a duplicity se přeskočí.</p>
+    <ul class="plain" style="margin-bottom:12px"><li><b>Fio:</b> Internetbanking → Pohyby na účtu → Export → CSV.</li><li><b>Raiffeisenbank:</b> Historie transakcí → Export → CSV.</li></ul>
+    <div class="field"><label for="impFile">Soubor CSV</label><input id="impFile" type="file" accept=".csv,text/csv,text/plain"></div>
+    <div class="grid2">${D().accounts.length?`<div class="field"><label for="impAcc">Výpis z účtu</label><select id="impAcc">${accOpts(defAcc())}</select></div>`:''}<div class="field"><label for="impWho">Kdo platil</label><select id="impWho"><option value="spol">Společné</option><option value="a">${esc(names().a)}</option><option value="b">${esc(names().b)}</option></select></div></div>
+    <p class="p" style="font-size:.82rem">Když u účtů vyplníš číslo účtu, appka pozná převody mezi vašimi účty a nebude je počítat jako výdaje.</p>
+    <p class="p">V plné verzi se Fio napojí přímo přes token jen pro čtení a pohyby přijdou samy.</p></section>`;
+  if(S.imp){
+    const sel=S.imp.rows.filter(r=>r.on).length;
+    h+=`<section class="card"><h2>Náhled importu <small>${S.imp.rows.length} řádků · ${S.imp.dupes} duplicit přeskočeno</small></h2>`;
+    if(!S.imp.rows.length) h+=`<p class="p">${esc(S.imp.err||'Nenašel jsem žádné nové pohyby.')}</p>`;
+    h+=`<div class="imp">${S.imp.rows.map((r,i)=>`<label><input type="checkbox" data-imp="${i}" ${r.on?'checked':''}><span><b>${esc(r.note||'Bez popisu')}</b><small>${new Date(r.date+'T12:00').toLocaleDateString('cs-CZ')} · ${r.type==='prevod'?`převod ${esc(accName(r.from))} → ${esc(accName(r.to))}`:(CAT[r.cat]||CAT.ostatni).n}${r.fixedId?' · spárováno s fixem':''}</small></span><span class="num" style="color:${r.type==='prijem'?'var(--in)':r.type==='prevod'?'var(--muted)':'var(--ink)'}">${r.type==='prijem'?'+':r.type==='prevod'?'⇆ ':'−'}${kc(r.amount)}</span></label>`).join('')}</div>
+      ${S.imp.rows.length?`<div class="btnrow"><button class="btn ghost" data-act="impcancel">Zrušit</button><button class="btn" data-act="impdo" ${sel?'':'disabled'}>Importovat ${sel}</button></div>`:''}</section>`;
+  }
+  return h;
+}
+function viceSettings(){
+  const s=D().settings, N=names(), locked=!!ls.get('rb2-lock');
+  return `<section class="card"><h2>Tento telefon</h2><p class="p">Podle toho appka ví, čí zápisy jsou nové pro toho druhého.</p>
+    <div class="seg" id="meSeg" style="margin:0"><button data-v="a" aria-pressed="${S.me==='a'}">${esc(N.a)}</button><button data-v="b" aria-pressed="${S.me==='b'}">${esc(N.b)}</button></div></section>
+  <section class="card"><h2>Kdo jsme</h2><div class="grid2"><div class="field"><label for="nameA">První</label><input id="nameA" value="${esc(s.nameA||'Filip')}"></div><div class="field"><label for="nameB">Druhý</label><input id="nameB" value="${esc(s.nameB||'Baruška')}"></div></div><button class="btn wide" data-act="savenames">Uložit jména</button></section>
+  <section class="card"><h2>Domácnost <small>${S.demo?'ukázka':'kód '+esc(S.hh?S.hh.code:'')}</small></h2>
+    <p class="p">Data se šifrují přímo v telefonu heslem domácnosti (AES-256). Server vidí jen nečitelné bloky.</p>
+    ${S.hh?`<div class="kv"><div><span>Kód domácnosti</span><b class="num">${esc(S.hh.code)}</b></div><div><span>Stav</span><span>${statusText()}</span></div>${S.sync.last?`<div><span>Naposledy odesláno</span><span>${new Date(S.sync.last).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'})}</span></div>`:''}</div>
+    <p class="p mt">Druhý telefon: otevřít appku, zvolit Připojit se a zadat kód a heslo domácnosti.</p>
+    <div class="btnrow"><button class="btn ghost" data-act="sharecode">Poslat kód</button><button class="btn danger" data-act="logout">Odhlásit telefon</button></div><div id="logoutC"></div>`:`<button class="btn wide" data-act="exitdemo">Ukončit ukázku</button>`}
+  </section>
+  <section class="card"><h2>Záloha</h2><p class="p">Záloha je soubor JSON se všemi daty, ${'ne'}šifrovaný. Ulož ho na bezpečné místo. Nahráním zálohy se záznamy doplní nebo přepíšou podle ID.</p>
+    <div class="btnrow"><button class="btn ghost" data-act="backup">Stáhnout zálohu</button><label class="btn ghost" for="restoreFile" style="text-align:center;cursor:pointer">Nahrát zálohu</label></div><input id="restoreFile" type="file" accept=".json,application/json" hidden></section>
+  <section class="card"><h2>Export</h2><p class="p">Všechny pohyby jako CSV pro Excel nebo Google Tabulky.</p><button class="btn ghost wide" id="copyCsv">Zkopírovat CSV</button><textarea id="csvOut" hidden style="width:100%;height:120px;margin-top:10px"></textarea></section>
+  <section class="card"><h2>Připravujeme</h2><ul class="plain">
+    <li>Push notifikace na zamčenou obrazovku: nový zápis, splatnost, přečerpaná obálka.</li>
+    <li>Automatické stahování pohybů z Fio.</li>
+    <li>Zkratka v iPhonu: účtenka z Fotek rovnou do appky.</li></ul></section>`;
+}
+
+/* ================= vazby ================= */
+function bindMain(){
+  const m=$('#main'), on=(sel,fn)=>m.querySelectorAll(sel).forEach(b=>b.onclick=e=>fn(b,e));
+  on('[data-sub]',b=>{ const [g,id]=b.dataset.sub.split(':'); S.sub[g]=id; S.imp=id==='import'?S.imp:null; render(); });
+  on('[data-goto]',b=>{ const [t,s]=b.dataset.goto.split(':'); S.tab=t; S.sub[t]=s; if(b.dataset.sm) S.sumMonth=b.dataset.sm; render(); scrollTo(0,0); });
+  on('[data-sm]:not([data-goto])',b=>{ S.sumMonth=b.dataset.sm; render(); });
+  on('[data-act="add"]',()=>openTx());
+  on('[data-act="addinc"]',()=>openTx(null,'prijem'));
+  on('[data-act="seen"]',()=>{ D().lastSeen=Date.now(); save(); render(); });
+  on('[data-act="exitdemo"]',()=>location.reload());
+  on('[data-act="retry"]',()=>syncNow());
+  on('[data-act="sharecode"]',shareCode);
+  on('[data-act="backup"]',exportBackup);
+  on('[data-act="logout"]',()=>{ const warn=pendingQ.size?` ${pendingQ.size} ${pl(pendingQ.size,'změna ještě nebyla odeslána','změny ještě nebyly odeslány','změn ještě nebylo odesláno')} a ztratí se.`:''; confirmSheet('Odhlásit tento telefon?',`Data z telefonu se smažou. Znovu se připojíš kódem a heslem domácnosti.${warn}`,'Odhlásit',logout); });
+  const rf=$('#restoreFile'); if(rf) rf.onchange=()=>{ if(rf.files[0]) importBackup(rf.files[0]); rf.value=''; };
+  on('[data-edit]',b=>{ const t=D().tx.find(t=>t.id===b.dataset.edit); if(!t) return; const rc=t.receiptId&&(D().receipts||[]).find(r=>r.id===t.receiptId); if(rc) receiptEditor(JSON.parse(JSON.stringify(rc)),true); else if(t.type==='prevod') openTransfer(t); else if(t.type==='vyrovnani') openSettleEdit(t); else openTx(t); });
+  on('[data-act="receipt"]',()=>openReceipt());
+  on('[data-dep]',b=>{ const [c,id]=b.dataset.dep.split(':'); openDeposit(c,D()[c].find(x=>x.id===id)); });
+  on('[data-goal]',b=>openGoal(D().goals.find(g=>g.id===b.dataset.goal)));
+  on('[data-act="newgoal"]',()=>openGoal());
+  on('[data-sink]',b=>openSink(D().sinking.find(s=>s.id===b.dataset.sink)));
+  on('[data-act="newsink"]',()=>openSink());
+  on('[data-acc]',b=>openAcc(D().accounts.find(a=>a.id===b.dataset.acc)));
+  on('[data-act="newacc"]',()=>openAcc());
+  on('[data-act="writefix"]',writeFixed);
+  on('[data-act="newfix"]',()=>openFixed());
+  on('[data-fix]',b=>openFixed(D().fixed.find(f=>f.id===b.dataset.fix)));
+  on('[data-pay]',b=>{ b.disabled=true; confirmPay(D().fixed.find(f=>f.id===b.dataset.pay)); });
+  on('[data-act="settle"]',()=>{ S.tab='vice'; S.sub.vice='vyrovnani'; render(); scrollTo(0,0); });
+  on('[data-act="dosettle"]',doSettle);
+  on('[data-tag]',b=>{ S.filter={q:'#'+b.dataset.tag,type:'vse',cat:'',who:'',acc:''}; S.tab='pohyby'; render(); scrollTo(0,0); });
+  on('[data-act="saveenv"]',()=>{ const l={}; EXP.forEach(c=>{ const v=parseAmt($('#lim-'+c.id).value); if(v>0) l[c.id]=Math.round(v); }); D().settings.limits=l; save(); toast('Obálky uloženy'); render(); });
+  on('[data-act="envavg"]',()=>{ const fixBy={}; D().fixed.forEach(f=>fixBy[f.cat]=(fixBy[f.cat]||0)+f.amount); EXP.forEach(c=>{ let s=0; for(let i=1;i<=3;i++) s+=(monthStats(shiftM(mkey(today()),-i)).byCat[c.id]||0)/3; const v=Math.round(Math.max(0,s-(fixBy[c.id]||0))/100)*100; $('#lim-'+c.id).value=v>0?v:''; }); toast('Vyplněno podle průměru. Uprav a ulož.'); });
+  on('[data-act="freetogoal"]',()=>{ const g=D().goals[0]; if(g) openDeposit('goals',g); });
+  on('[data-act="savenames"]',()=>{ D().settings.nameA=$('#nameA').value.trim()||'Filip'; D().settings.nameB=$('#nameB').value.trim()||'Baruška'; save(); toast('Uloženo'); render(); });
+  on('[data-act="impcancel"]',()=>{ S.imp=null; render(); });
+  on('[data-act="impdo"]',doImport);
+  m.querySelectorAll('[data-imp]').forEach(c=>c.onchange=()=>{ S.imp.rows[+c.dataset.imp].on=c.checked; const b=m.querySelector('[data-act="impdo"]'); const n=S.imp.rows.filter(r=>r.on).length; if(b){ b.textContent='Importovat '+n; b.disabled=!n; } });
+  const fi=$('#impFile'); if(fi) fi.onchange=()=>{ const f=fi.files[0]; if(!f) return; readCsvFile(f).then(txt=>{ S.imp=parseBank(txt,$('#impWho').value,($('#impAcc')&&$('#impAcc').value)||null); render(); }); };
+  const cc=$('#copyCsv'); if(cc) cc.onclick=copyCsv;
+  const fq=$('#fq'); if(fq) fq.oninput=()=>{ S.filter.q=fq.value; render(); };
+  m.querySelectorAll('#fType button').forEach(b=>b.onclick=()=>{ S.filter.type=b.dataset.v; render(); });
+  const fc=$('#fCat'); if(fc) fc.onchange=()=>{ S.filter.cat=fc.value; render(); };
+  const fw=$('#fWho'); if(fw) fw.onchange=()=>{ S.filter.who=fw.value; render(); };
+  const fa=$('#fAcc'); if(fa) fa.onchange=()=>{ S.filter.acc=fa.value; render(); };
+  on('[data-act="transfer"]',()=>openTransfer());
+  m.querySelectorAll('#meSeg button').forEach(b=>b.onclick=()=>setMe(b.dataset.v));
+  if($('#simInc')){ ['simInc','simOut','simMonths','simOnce'].forEach(id=>$('#'+id).oninput=simCalc); simCalc();
+    m.querySelectorAll('#simPresets button').forEach(b=>b.onclick=()=>{ const avg=avgMonths(3); const P={rodicovska:[-Math.round(avg.inc*0.4/1000)*1000,2500,12,15000],hypoteka:[0,6000,24,0],auto:[0,1500,36,150000],vyplata:[8000,0,12,0]}[b.dataset.p];
+      [$('#simInc').value,$('#simOut').value,$('#simMonths').value,$('#simOnce').value]=P.map(String); simCalc(); }); }
+}
+
+/* ================= sheets ================= */
+function closeSheet(){ $('#sheetRoot').innerHTML=''; }
+function sheet(title, body, noClose){
+  $('#sheetRoot').innerHTML=`<div class="sheet-wrap" id="sw"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="grip"></div><h3>${esc(title)}${noClose?'':'<button id="closeS" aria-label="Zavřít">✕</button>'}</h3>${body}</div></div>`;
+  if(!noClose){ $('#closeS').onclick=closeSheet; $('#sw').addEventListener('click',e=>{ if(e.target.id==='sw') closeSheet(); }); }
+}
+function confirmSheet(title,text,okLabel,fn){
+  sheet(title,`<p class="p">${esc(text)}</p><div class="foot"><button class="btn ghost" id="cNo">Zpět</button><button class="btn danger" id="cYes">${esc(okLabel)}</button></div>`);
+  $('#cNo').onclick=closeSheet; $('#cYes').onclick=()=>{ closeSheet(); fn(); };
+}
+function upsert(col,obj){ const arr=D()[col]; const i=arr.findIndex(x=>x.id===obj.id); if(i>=0) arr[i]=obj; else arr.push(obj); save(); }
+function delItem(col,id){ D()[col]=D()[col].filter(x=>x.id!==id); save(); }
+function delConfirm(holder,text,fn){ $(holder).innerHTML=`<div class="confirm"><span>${esc(text)}</span><div class="foot"><button class="btn ghost" data-no>Ponechat</button><button class="btn danger" data-yes>Smazat</button></div></div>`; $(holder).querySelector('[data-no]').onclick=()=>$(holder).innerHTML=''; $(holder).querySelector('[data-yes]').onclick=()=>{ closeSheet(); fn(); }; }
+
+function recentNotes(cat){ const seen=new Map(); [...D().tx].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(t=>{ if(t.cat===cat&&t.note&&!t.fixedId&&!seen.has(t.note)) seen.set(t.note,t.amount); }); return [...seen.entries()].slice(0,4); }
+
+function openTx(t, presetType){
+  const isNew=!t, N=names(), lastCat=ls.get('rb-lastcat');
+  const st={ type:t?.type||presetType||'vydaj', cat:t?.cat||(presetType==='prijem'?'vyplata':(lastCat&&EXP.some(c=>c.id===lastCat)?lastCat:'jidlo')), who:t?.who||(presetType==='prijem'&&S.me?S.me:'spol'), manual:!isNew, shared:!!t?.shared };
+  const draw=()=>{
+    const cats=st.type==='prijem'?INC:EXP; if(!cats.find(c=>c.id===st.cat)) st.cat=cats[0].id;
+    $('#catChips').innerHTML=cats.map(c=>`<button data-cat="${c.id}" aria-pressed="${c.id===st.cat}"><i class="dot" style="background:${c.c}"></i>${c.n}</button>`).join('');
+    $('#catChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ st.cat=b.dataset.cat; st.manual=true; $('#smart').textContent=''; draw(); });
+    $$('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.type));
+    $$('#whoSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.who));
+    $('#shareRow').hidden = !(st.type==='vydaj' && (st.who==='a'||st.who==='b'));
+    const sg=recentNotes(st.cat);
+    $('#sugg').innerHTML=isNew&&sg.length?sg.map(([n,a],i)=>`<button data-i="${i}">${esc(n)} · ${tis(a)}</button>`).join(''):'';
+    $('#sugg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const [n,a]=sg[+b.dataset.i]; $('#txNote').value=n; if(!$('#txAmt').value) $('#txAmt').value=a; });
+  };
+  const defDate=t?t.date:(mkey(today())===S.month?today():S.month+'-01');
+  sheet(isNew?(st.type==='prijem'?'Nový příjem':'Nový pohyb'):'Upravit pohyb',`
+    ${isNew?`<div class="receipt"><span>Nákup z obchodu? Vyfoť účtenku a appka ji rozdělí na jídlo, drogerii a další.</span><button class="btn sm" id="rcOpen" type="button">Účtenka</button></div>`:''}
+    <div class="seg" id="typeSeg"><button data-v="vydaj">Výdaj</button><button data-v="prijem">Příjem</button></div>
+    <div class="amount-in"><input id="txAmt" inputmode="decimal" placeholder="0" value="${t?t.amount:''}" aria-label="Částka"><span>Kč</span></div>
+    <div class="field"><label for="txNote">Kde / co</label><input id="txNote" placeholder="např. Lidl, Shell, kavárna" value="${esc(t?.note||'')}" autocomplete="off"></div>
+    <div class="smart" id="smart"></div>
+    <div class="sugg" id="sugg"></div>
+    <span class="lbl">Kategorie</span><div class="chips" id="catChips"></div>
+    <span class="lbl">Kdo platil</span>
+    <div class="seg three" id="whoSeg" style="margin-top:6px"><button data-v="a">${esc(N.a)}</button><button data-v="b">${esc(N.b)}</button><button data-v="spol">Společné</button></div>
+    <label class="checkrow" id="shareRow"><input type="checkbox" id="txShared" ${st.shared?'checked':''}> Dělíme napůl (zaplaceno ze svého)</label>
+    ${D().accounts.length?`<div class="field"><label for="txAcc">${st.type==='prijem'?'Na účet':'Z účtu'}</label><select id="txAcc"><option value="">Neuvedeno</option>${accOpts(t?(t.account||''):defAcc())}</select></div>`:''}
+    <div class="grid2"><div class="field"><label for="txDate">Datum</label><input id="txDate" type="date" value="${defDate}"></div><div class="field"><label for="txTags">Štítky</label><input id="txTags" placeholder="dovolená, oslava" value="${esc((t?.tags||[]).join(', '))}"></div></div>
+    <div class="field"><label for="txComment">Komentář pro ${esc(S.me==='a'?'Barušku':S.me==='b'?N.a:'druhého')}</label><input id="txComment" placeholder="nepovinné" value="${esc(t?.comment||'')}"></div>
+    ${t&&t.by?`<p class="muted" style="font-size:.82rem;margin:-4px 0 12px">Naposledy ${(t.changedAt||0)>(t.createdAt||0)+2000?'upravil':'zapsal'}${fem(N[t.by])?'a':''} ${esc(N[t.by]||'')}${t.changedAt?', '+new Date(t.changedAt).toLocaleString('cs-CZ',{day:'numeric',month:'numeric',hour:'2-digit',minute:'2-digit'}):''}.</p>`:''}
+    <div class="foot">${isNew?'':'<button class="btn danger" id="txDel">Smazat</button><button class="btn ghost" id="txDup">Znovu dnes</button>'}<button class="btn" id="txSave">${isNew?'Zapsat':'Uložit'}</button></div>
+    <div id="delConfirm"></div>`);
+  $$('#typeSeg button').forEach(b=>b.onclick=()=>{ st.type=b.dataset.v; draw(); });
+  $$('#whoSeg button').forEach(b=>b.onclick=()=>{ st.who=b.dataset.v; draw(); });
+  $('#txNote').oninput=()=>{ if(st.manual||st.type!=='vydaj') return; const g=guessCat($('#txNote').value); if(g&&g.cat!==st.cat){ st.cat=g.cat; draw(); } $('#smart').textContent=g?`Kategorie ${CAT[g.cat].n.toLowerCase()} ${g.why}`:''; };
+  const rco=$('#rcOpen'); if(rco) rco.onclick=()=>openReceipt();
+  draw();
+  if(isNew) setTimeout(()=>$('#txAmt')?.focus(),60);
+  const collect=()=>{ const amount=parseAmt($('#txAmt').value); if(!(amount>0)){ toast('Zadej částku větší než nula.'); $('#txAmt').focus(); return null; }
+    const tags=$('#txTags').value.split(',').map(s=>s.trim().replace(/^#/,'')).filter(Boolean);
+    return {date:$('#txDate').value||today(),amount:Math.round(amount*100)/100,type:st.type,cat:st.cat,who:st.who,note:$('#txNote').value.trim(),tags,comment:$('#txComment').value.trim(),shared:st.type==='vydaj'&&(st.who==='a'||st.who==='b')&&$('#txShared').checked,account:($('#txAcc')&&$('#txAcc').value)||null}; };
+  $('#txSave').onclick=()=>{ const base=collect(); if(!base) return; const now=Date.now();
+    const rec={id:t?.id||uid('t'),...base,createdAt:t?.createdAt||now,changedAt:now,by:S.me||t?.by||null}; if(t?.fixedId) rec.fixedId=t.fixedId;
+    if(st.type==='vydaj') ls.set('rb-lastcat',st.cat); if(rec.account&&isNew) ls.set('rb-acc-'+(S.me||'x'),rec.account);
+    upsert('tx',rec); closeSheet(); S.month=mkey(rec.date); toast(isNew?'Zapsáno':'Uloženo'); render(); };
+  const dup=$('#txDup'); if(dup) dup.onclick=()=>{ const base=collect(); if(!base) return; const now=Date.now(); upsert('tx',{id:uid('t'),...base,date:today(),createdAt:now,changedAt:now,by:S.me||null}); closeSheet(); S.month=mkey(today()); toast('Zapsáno znovu na dnešek'); render(); };
+  const del=$('#txDel'); if(del) del.onclick=()=>delConfirm('#delConfirm','Opravdu smazat tenhle pohyb?',()=>{ delItem('tx',t.id); toast('Smazáno'); render(); });
+}
+
+function openReceipt(){
+  const mode={v:'text'};
+  sheet('Účtenka z obchodu',`
+    ${S.sampleOk?`<div class="seg" id="rcMode"><button data-v="text" aria-pressed="true">Text z fotky · zdarma</button><button data-v="ai" aria-pressed="false">Fotka přes Claude</button></div>`:''}
+    <div id="rcText">
+      <ol class="steps" style="margin-bottom:12px"><li>Vyfoť účtenku Fotoaparátem. Dlouhou klidně na víc fotek.</li><li>Otevři fotku ve Fotkách a klepni na ikonu Živého textu vpravo dole (rámeček s řádky).</li><li>Zvol zkopírování všeho textu a vlož ho sem. U víc fotek vkládej postupně pod sebe.</li></ol>
+      <div class="field"><label for="rcPaste">Text účtenky</label><textarea id="rcPaste" rows="8" placeholder="Sem vlož zkopírovaný text účtenky" style="font-size:.88rem"></textarea></div>
+      <button class="btn wide" id="rcParse">Rozdělit účtenku</button>
+      <p class="p mt" style="font-size:.82rem">Text se zpracuje jen v tomhle telefonu. Funguje i e-účtenka z Lidl Plus nebo Kaufland Card, když z ní zkopíruješ text.</p>
+    </div>
+    <div id="rcAi" hidden>
+      <p class="p">Claude přečte fotku sám, včetně zkratek a slev. Funguje jen s účtem Claude.</p>
+      <label class="btn wide" for="rcFiles" style="display:block;text-align:center;cursor:pointer" id="rcPick">Vyfotit nebo vybrat účtenku</label>
+      <input id="rcFiles" type="file" accept="image/*" multiple hidden>
+    </div>
+    <div class="smart mt" id="rcStatus" role="status"></div>`);
+  $$('#rcMode button').forEach(b=>b.onclick=()=>{ mode.v=b.dataset.v; $$('#rcMode button').forEach(x=>x.setAttribute('aria-pressed',x===b)); $('#rcText').hidden=mode.v!=='text'; $('#rcAi').hidden=mode.v==='text'; $('#rcStatus').textContent=''; });
+  $('#rcParse').onclick=()=>{ const t=$('#rcPaste').value; if(t.trim().length<10){ $('#rcStatus').textContent='Nejdřív vlož text účtenky.'; return; }
+    const rc=parseReceiptText(t); if(!rc.items.length){ $('#rcStatus').textContent='V textu jsem nenašel položky s cenou. Zkontroluj, že je zkopírovaná celá účtenka.'; return; } receiptEditor(rc,false); };
+  const fi=$('#rcFiles'); if(fi) fi.onchange=async()=>{ if(!fi.files.length) return; const pick=$('#rcPick'); pick.style.pointerEvents='none'; pick.style.opacity='.55';
+    $('#rcStatus').textContent=`Čtu ${fi.files.length>1?fi.files.length+' fotky':'účtenku'}, chvilku to potrvá…`;
+    try{ const rc=await readReceiptItems(fi.files); receiptEditor(rc,false); }
+    catch(e){ pick.style.pointerEvents=''; pick.style.opacity=''; fi.value='';
+      $('#rcStatus').textContent = e&&e.code==='empty' ? 'Na fotce jsem nenašel položky. Zkus ostřejší fotku celé účtenky.' : e&&e.code==='not_granted' ? 'Čtení účtenek není povolené.' : e&&e.code==='rate_limited' ? 'Teď je toho moc najednou, zkus to za chvíli.' : 'Účtenku se nepodařilo přečíst. Zkus to znovu.'; } };
+}
+function receiptEditor(rc, existing){
+  const N=names();
+  const opts=c=>EXP.map(x=>`<option value="${x.id}" ${x.id===c?'selected':''}>${x.n}</option>`).join('');
+  sheet(existing?'Účtenka '+rc.store:'Zkontroluj účtenku',`
+    ${rc.nLearned?`<p class="smart" style="margin:-6px 0 6px">${rc.nLearned} ${pl(rc.nLearned,'položku','položky','položek')} jsem zařadil podle toho, jak jste je třídili dřív.</p>`:''}${rc.nUnsure?`<p class="smart" style="margin:-2px 0 10px;color:var(--warn)">U ${rc.nUnsure} ${pl(rc.nUnsure,'položky','položek','položek')} jsem si nebyl jistý a dal jsem ${pl(rc.nUnsure,'ji','je','je')} do jídla. ${pl(rc.nUnsure,'Je označená, zkontroluj ji.','Jsou označené, zkontroluj je.','Jsou označené, zkontroluj je.')}</p>`:''}
+    <div class="grid2"><div class="field"><label for="rcStore">Obchod</label><input id="rcStore" value="${esc(rc.store)}"></div><div class="field"><label for="rcDate">Datum</label><input id="rcDate" type="date" value="${rc.date}"></div></div>
+    <div class="field"><label for="rcTotal">Celkem zaplaceno (Kč)</label><input id="rcTotal" inputmode="decimal" value="${rc.total}"></div>
+    <div class="stack" id="rcStack"></div><div class="rc-sum" id="rcSum"></div>
+    <span class="lbl" style="display:block;margin-top:14px">Položky (${rc.items.length}) · kategorii změníš u každé zvlášť</span>
+    <div class="rc-items" id="rcItems"></div>
+    <span class="lbl">Kdo platil</span>
+    <div class="seg three" id="rcWho" style="margin-top:6px"><button data-v="a">${esc(N.a)}</button><button data-v="b">${esc(N.b)}</button><button data-v="spol">Společné</button></div>
+    ${D().accounts.length?`<div class="field mt"><label for="rcAcc">Zaplaceno z účtu</label><select id="rcAcc"><option value="">Neuvedeno</option>${accOpts(existing?(rc.account||''):defAcc())}</select></div>`:''}
+    <div class="foot">${existing?'<button class="btn danger" id="rcDel">Smazat účtenku</button>':''}<button class="btn" id="rcSave">${existing?'Uložit':'Uložit rozdělení'}</button></div><div id="rcConfirm"></div>`);
+  const drawItems=()=>{ $('#rcItems').innerHTML=rc.items.map((it,i)=>`<div class="rc-item ${it.learned?'learned':''}"><span class="nm">${esc(it.name)}${it.learned?'<small>naučeno</small>':it.unsure?'<small style="color:var(--warn)">zkontroluj</small>':''}</span><select data-ri="${i}" aria-label="Kategorie ${esc(it.name)}">${opts(it.cat)}</select><input data-rp="${i}" inputmode="decimal" value="${it.price}" aria-label="Cena ${esc(it.name)}"><button data-rx="${i}" aria-label="Odebrat ${esc(it.name)}" type="button">✕</button></div>`).join('');
+    $$('#rcItems [data-ri]').forEach(el=>el.onchange=()=>{ const it=rc.items[+el.dataset.ri]; it.cat=el.value; it.ai=it.unsure?'?':it.ai; drawSum(); });
+    $$('#rcItems [data-rp]').forEach(el=>el.oninput=()=>{ const v=parseAmt(el.value); if(v>=0){ rc.items[+el.dataset.rp].price=r2(v); drawSum(); } });
+    $$('#rcItems [data-rx]').forEach(el=>el.onclick=()=>{ rc.items.splice(+el.dataset.rx,1); drawItems(); drawSum(); }); };
+  const drawSum=()=>{ const by={}; rc.items.forEach(it=>by[it.cat]=(by[it.cat]||0)+it.price); const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);
+    const sum=r2(rows.reduce((a,r)=>a+r[1],0)), tot=parseAmt($('#rcTotal').value)||sum, diff=r2(tot-sum);
+    $('#rcStack').innerHTML=rows.map(([c,a])=>`<i style="width:${sum?a/sum*100:0}%;background:${(CAT[c]||CAT.ostatni).c}"></i>`).join('');
+    $('#rcSum').innerHTML=rows.map(([c,a])=>`<div><span><i class="dot" style="background:${(CAT[c]||CAT.ostatni).c}"></i>${(CAT[c]||CAT.ostatni).n}</span><b class="num">${kc(a)}</b></div>`).join('')+
+      (Math.abs(diff)>=0.5?`<div style="color:var(--warn)"><span>${diff>0?'Nepřiřazeno':'Položky jsou o tolik víc'} (přičte se k největší kategorii)</span><b class="num">${kc(diff)}</b></div>`:''); };
+  const st={who:rc.who||'spol'}; const drawWho=()=>$$('#rcWho button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.who));
+  $$('#rcWho button').forEach(b=>b.onclick=()=>{ st.who=b.dataset.v; drawWho(); });
+  $('#rcTotal').oninput=drawSum;
+  drawItems(); drawSum(); drawWho();
+  $('#rcSave').onclick=()=>{ if(!rc.items.length){ toast('Účtenka nemá žádné položky.'); return; }
+    const total=parseAmt($('#rcTotal').value); rc.total=total>0?r2(total):r2(rc.items.reduce((a,i)=>a+i.price,0));
+    rc.store=$('#rcStore').value.trim()||'Účtenka'; rc.date=$('#rcDate').value||today(); rc.who=st.who; rc.account=($('#rcAcc')&&$('#rcAcc').value)||null;
+    const ic=D().itemCats=D().itemCats||{}; rc.items.forEach(it=>{ const k=itemKey(it.name); if(!k) return; if(it.cat!==it.ai||ic[k]) ic[k]=it.cat; });
+    const {nLearned,nUnsure,...clean}=rc; clean.items=rc.items.map(({learned,unsure,...i})=>i);
+    saveReceipt(clean); closeSheet(); S.month=mkey(clean.date);
+    const n=new Set(clean.items.map(i=>i.cat)).size; toast(`Účtenka uložena, ${n} ${pl(n,'kategorie','kategorie','kategorií')}`); render(); };
+  const del=$('#rcDel'); if(del) del.onclick=()=>delConfirm('#rcConfirm',`Smazat celou účtenku ${rc.store} (${kc(rc.total)})?`,()=>{ D().tx=D().tx.filter(t=>t.receiptId!==rc.id); delItem('receipts',rc.id); toast('Účtenka smazána'); render(); });
+}
+
+function fixTx(k,f,date){ const now=Date.now(), base={id:fixTxId(k,f),date,amount:+f.amount,note:f.name,fixedId:f.id,who:f.who||'spol',createdAt:now,changedAt:now,by:S.me||null};
+  return f.toAccount ? {...base,type:'prevod',cat:'prevod',from:f.account||null,to:f.toAccount} : {...base,type:'vydaj',cat:f.cat,account:f.account||null}; }
+async function confirmPay(f){ const k=mkey(today()); upsert('tx',fixTx(k,f,dueDate(k,f))); toast(`${f.name}: ${f.toAccount?'převedeno':'strženo'} a zapsáno`); render(); }
+function writeFixed(){ const k=S.month, pend=fixedSorted().filter(f=>!fixDone(k,f)); if(!pend.length) return; const now=Date.now(), date=mkey(today())===k?today():k+'-01';
+  pend.forEach(f=>upsert('tx',fixTx(k,f,f.day?dueDate(k,f):date))); toast(`Zapsáno ${pend.length} ${pl(pend.length,'platba','platby','plateb')}`); render(); }
+
+function openFixed(f){
+  const isNew=!f, N=names(), st={cat:f?.cat||'bydleni', who:f?.who||'spol'};
+  const draw=()=>{ $('#fCats').innerHTML=EXP.map(c=>`<button data-cat="${c.id}" aria-pressed="${c.id===st.cat}"><i class="dot" style="background:${c.c}"></i>${c.n}</button>`).join(''); $('#fCats').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.cat=b.dataset.cat;draw();}); $$('#fWho button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===st.who)); };
+  const ph=(f?.priceHistory||[]);
+  sheet(isNew?'Nová fixní položka':'Upravit fixní položku',`
+    <div class="field"><label for="fName">Název</label><input id="fName" placeholder="např. Nájem" value="${esc(f?.name||'')}"></div>
+    <div class="amount-in"><input id="fAmt" inputmode="decimal" placeholder="0" value="${f?f.amount:''}" aria-label="Částka za měsíc"><span>Kč / měs.</span></div>
+    <div class="field"><label for="fDay">Den stržení v měsíci (nepovinné)</label><input id="fDay" inputmode="numeric" placeholder="např. 15" value="${f?.day||''}"></div>
+    ${D().accounts.length?`<div class="grid2"><div class="field"><label for="fAcc">Z účtu</label><select id="fAcc"><option value="">Neuvedeno</option>${accOpts(f?.account||'')}</select></div><div class="field"><label for="fTo">Co to je</label><select id="fTo"><option value="">Platba (výdaj)</option>${D().accounts.filter(a=>a.kind==='sporeni'||a.kind==='investice').map(a=>`<option value="${a.id}" ${f?.toAccount===a.id?'selected':''}>Převod na ${esc(a.name)}</option>`).join('')}</select></div></div>`:''}
+    <span class="lbl">Kategorie</span><div class="chips" id="fCats"></div>
+    <span class="lbl">Kdo platí</span><div class="seg three" id="fWho" style="margin-top:6px"><button data-v="a">${esc(N.a)}</button><button data-v="b">${esc(N.b)}</button><button data-v="spol">Společné</button></div>
+    ${ph.length?`<p class="muted" style="font-size:.82rem;margin:0 0 10px">Historie ceny: ${ph.map(p=>`${new Date(p.d+'T12:00').toLocaleDateString('cs-CZ')} ${kc(p.from)} → ${kc(p.to)}`).join(', ')}</p>`:''}
+    <p class="muted" style="font-size:.82rem;margin:0 0 12px">S dnem stržení se platba 3 dny předem ukáže k potvrzení. Změnu ceny si appka zapamatuje a ohlídá zdražení.</p>
+    <div class="foot">${isNew?'':'<button class="btn danger" id="fDel">Smazat</button>'}<button class="btn" id="fSave">Uložit</button></div><div id="fConfirm"></div>`);
+  $$('#fWho button').forEach(b=>b.onclick=()=>{st.who=b.dataset.v;draw();}); draw();
+  $('#fSave').onclick=()=>{ const name=$('#fName').value.trim(), amount=parseAmt($('#fAmt').value); if(!name){toast('Položka potřebuje název.');return;} if(!(amount>0)){toast('Zadej částku.');return;}
+    const dr=parseInt($('#fDay').value,10), day=dr>=1&&dr<=31?dr:null; if($('#fDay').value.trim()&&!day){toast('Den zadej jako číslo 1 až 31.');return;}
+    const hist=[...(f?.priceHistory||[])]; if(f && +f.amount!==amount) hist.push({d:today(),from:+f.amount,to:amount});
+    const maxO=Math.max(0,...D().fixed.map(x=>x.order||0));
+    upsert('fixed',{id:f?.id||uid('f'),name,amount,cat:st.cat,who:st.who,order:f?.order??maxO+1,day,priceHistory:hist,account:($('#fAcc')&&$('#fAcc').value)||null,toAccount:($('#fTo')&&$('#fTo').value)||null}); closeSheet(); toast('Uloženo'); render(); };
+  const del=$('#fDel'); if(del) del.onclick=()=>delConfirm('#fConfirm',`Smazat „${f.name}“ ze seznamu fixů? Zapsané platby zůstanou.`,()=>{ delItem('fixed',f.id); toast('Smazáno'); render(); });
+}
+function openGoal(g){
+  const isNew=!g;
+  sheet(isNew?'Nový cíl':'Upravit cíl',`<div class="field"><label for="gName">Název</label><input id="gName" placeholder="např. Rekonstrukce bytu" value="${esc(g?.name||'')}"></div>
+    <div class="grid2"><div class="field"><label for="gTarget">Cílová částka (Kč)</label><input id="gTarget" inputmode="numeric" value="${g?g.target:''}"></div><div class="field"><label for="gSaved">Už našetřeno (Kč)</label><input id="gSaved" inputmode="numeric" value="${g?g.saved:'0'}"></div></div>
+    <div class="field"><label for="gDead">Termín (nepovinné)</label><input id="gDead" type="month" value="${esc(g?.deadline||'')}"></div>
+    <div class="foot">${isNew?'':'<button class="btn danger" id="gDel">Smazat</button>'}<button class="btn" id="gSave">Uložit cíl</button></div><div id="gConfirm"></div>`);
+  $('#gSave').onclick=()=>{ const name=$('#gName').value.trim(), target=parseAmt($('#gTarget').value), saved=parseAmt($('#gSaved').value)||0; if(!name){toast('Cíl potřebuje název.');return;} if(!(target>0)){toast('Zadej cílovou částku.');return;}
+    upsert('goals',{id:g?.id||uid('g'),name,target,saved:Math.max(0,saved),deadline:$('#gDead').value||'',createdAt:g?.createdAt||Date.now()}); closeSheet(); toast('Cíl uložen'); render(); };
+  const del=$('#gDel'); if(del) del.onclick=()=>delConfirm('#gConfirm',`Smazat cíl „${g.name}“?`,()=>{ delItem('goals',g.id); toast('Cíl smazán'); render(); });
+}
+function openSink(s){
+  const isNew=!s;
+  sheet(isNew?'Nový velký výdaj':'Upravit velký výdaj',`<div class="field"><label for="sName">Co to je</label><input id="sName" placeholder="např. Povinné ručení" value="${esc(s?.name||'')}"></div>
+    <div class="grid2"><div class="field"><label for="sAmt">Částka (Kč)</label><input id="sAmt" inputmode="numeric" value="${s?s.amount:''}"></div><div class="field"><label for="sDue">Kdy se platí</label><input id="sDue" type="month" value="${esc(s?.due||shiftM(mkey(today()),6))}"></div></div>
+    <div class="grid2"><div class="field"><label for="sSaved">Už odloženo (Kč)</label><input id="sSaved" inputmode="numeric" value="${s?s.saved||0:'0'}"></div>
+    <div class="field"><label for="sAcc">Peníze leží na</label><select id="sAcc"><option value="">Neuvedeno</option>${accOpts(s?.account||((D().accounts.find(a=>a.kind==='sporeni'&&a.purpose)||{}).id||''),a=>a.kind==='sporeni'||a.kind==='ucet')}</select></div></div>
+    <div class="foot">${isNew?'':'<button class="btn danger" id="sDel">Smazat</button>'}<button class="btn" id="sSave">Uložit</button></div><div id="sConfirm"></div>`);
+  $('#sSave').onclick=()=>{ const name=$('#sName').value.trim(), amount=parseAmt($('#sAmt').value), due=$('#sDue').value; if(!name||!(amount>0)||!due){toast('Vyplň název, částku a měsíc.');return;}
+    upsert('sinking',{id:s?.id||uid('s'),name,amount,due,saved:Math.max(0,parseAmt($('#sSaved').value)||0),account:$('#sAcc').value||null}); closeSheet(); toast('Uloženo'); render(); };
+  const del=$('#sDel'); if(del) del.onclick=()=>delConfirm('#sConfirm',`Smazat „${s.name}“?`,()=>{ delItem('sinking',s.id); render(); });
+}
+function openDeposit(col,g){
+  const isGoal=col==='goals', target=isGoal?g.target:g.amount;
+  sheet(isGoal?'Připsat k cíli':'Odložit na velký výdaj',`<p class="muted" style="margin:-6px 0 12px">${esc(g.name)} · ${kc(g.saved||0)} z ${kc(target)}</p>
+    <div class="seg" id="depSeg"><button data-v="1" aria-pressed="true">Přidat</button><button data-v="-1" aria-pressed="false">Vybrat</button></div>
+    <div class="amount-in"><input id="depAmt" inputmode="decimal" placeholder="0" aria-label="Částka" value="${isGoal?'':Math.round(sinkNeed(g))||''}"><span>Kč</span></div>
+    ${!isGoal&&g.account?`<label class="checkrow" style="margin:-4px 0 8px"><input type="checkbox" id="depTr" checked> Zapsat i převod na ${esc(accName(g.account))}</label><div class="field" id="depFromF"><label for="depFrom">Z účtu</label><select id="depFrom">${accOpts(ls.get('rb-trfrom')||defAcc(),a=>a.kind!=='dluh'&&a.id!==g.account)}</select></div>`:''}
+    <div class="foot"><button class="btn" id="depSave">Uložit</button></div>`);
+  const dt=$('#depTr'); if(dt) dt.onchange=()=>{ $('#depFromF').hidden=!dt.checked; };
+  let sign=1; $$('#depSeg button').forEach(b=>b.onclick=()=>{ sign=+b.dataset.v; $$('#depSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
+  setTimeout(()=>$('#depAmt')?.focus(),60);
+  $('#depSave').onclick=()=>{ const a=parseAmt($('#depAmt').value); if(!(a>0)){toast('Zadej částku.');return;} upsert(col,{...g,saved:Math.max(0,(g.saved||0)+sign*a)});
+    if(dt&&dt.checked&&sign>0){ const now=Date.now(); upsert('tx',{id:uid('p'),type:'prevod',cat:'prevod',who:'spol',from:$('#depFrom').value,to:g.account,amount:a,date:today(),note:g.name,createdAt:now,changedAt:now,by:S.me||null}); } closeSheet(); toast(sign>0?'Připsáno':'Vybráno'); render(); };
+}
+function openAcc(a){
+  const isNew=!a, k=a?.kind||'ucet';
+  sheet(isNew?'Nový účet':esc(a.name),`
+    ${isNew?'':`<p class="muted" style="margin:-6px 0 12px">Podle appky teď ${kc(accVal(a))}. Když banka ukazuje jinou částku, přepiš ji.</p>`}
+    <div class="field"><label for="aVal">Aktuální zůstatek (Kč)</label><input id="aVal" inputmode="decimal" value="${isNew?'':accVal(a)}"></div>
+    <div class="grid2"><div class="field"><label for="aName">Název</label><input id="aName" placeholder="např. RB spořicí" value="${esc(a?.name||'')}"></div><div class="field"><label for="aKind">Typ</label><select id="aKind">${Object.entries(ACC_KIND).map(([x,l])=>`<option value="${x}" ${x===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
+    <div class="grid2"><div class="field"><label for="aBank">Banka</label><input id="aBank" placeholder="Fio, RB…" value="${esc(a?.bank||'')}"></div><div class="field"><label for="aNum">Číslo účtu (pro import)</label><input id="aNum" inputmode="numeric" placeholder="nepovinné" value="${esc(a?.number||'')}"></div></div>
+    <div id="aSav">
+      <div class="grid2"><div class="field"><label for="aRate">Úrok % p.a.</label><input id="aRate" inputmode="decimal" placeholder="např. 4" value="${a?.rate??''}"></div><div class="field"><label for="aMin">Podmínka: plateb měsíčně</label><input id="aMin" inputmode="numeric" placeholder="žádná" value="${a?.cond?.min||''}"></div></div>
+      <div class="field"><label for="aCondAcc">Platby se počítají z účtu</label><select id="aCondAcc"><option value="">—</option>${accOpts(a?.cond?.account||'',x=>x.kind==='ucet')}</select></div>
+      <label class="checkrow"><input type="checkbox" id="aCondTr" ${a?.cond?.transfers?'checked':''}> Počítat i odchozí převody</label>
+    </div>
+    <div class="field"><label for="aPurpose">K čemu slouží</label><input id="aPurpose" placeholder="nepovinné, např. na pojištění" value="${esc(a?.purpose||'')}"></div>
+    <div class="foot">${isNew?'':'<button class="btn danger" id="aDel">Smazat</button>'}<button class="btn" id="aSave">Uložit</button></div><div id="aConfirm"></div>`);
+  const kindSel=$('#aKind'), sync=()=>{ $('#aSav').hidden=kindSel.value!=='sporeni'; }; kindSel.onchange=sync; sync();
+  $('#aSave').onclick=()=>{ const name=$('#aName').value.trim(); if(!name){toast('Účet potřebuje název.');return;}
+    const v=parseAmt($('#aVal').value), kind=kindSel.value, rate=parseAmt($('#aRate').value), min=parseInt($('#aMin').value,10);
+    const rec={...(a||{}),id:a?.id||uid('a'),name,kind,bank:$('#aBank').value.trim(),number:$('#aNum').value.replace(/[^\d\-\/]/g,''),purpose:$('#aPurpose').value.trim(),history:[...(a?.history||[])]};
+    if(kind==='sporeni'){ rec.rate=rate>0?rate:null; rec.cond=min>0&&$('#aCondAcc').value?{account:$('#aCondAcc').value,min,transfers:$('#aCondTr').checked}:null; } else { rec.rate=null; rec.cond=null; }
+    if(isFinite(v) && (isNew || Math.abs(v-accVal(a))>=0.01)){ rec.history=rec.history.filter(x=>x.d!==today()); rec.history.push({d:today(),v}); rec.history.sort((x,y)=>x.d.localeCompare(y.d)); }
+    else if(isNew){ toast('Zadej aktuální zůstatek.'); return; }
+    upsert('accounts',rec); closeSheet(); toast('Uloženo'); render(); };
+  const del=$('#aDel'); if(del) del.onclick=()=>delConfirm('#aConfirm',`Smazat účet „${a.name}“? Pohyby zůstanou, jen bez účtu.`,()=>{ delItem('accounts',a.id); render(); });
+}
+function openTransfer(t){
+  const acc=D().accounts.filter(a=>a.kind!=='dluh'); if(acc.length<2){ toast('Nejdřív přidej aspoň dva účty v Plán → Účty.'); return; }
+  const fromDef=t?.from||ls.get('rb-trfrom')||acc[0].id, toDef=t?.to||ls.get('rb-trto')||acc[1].id;
+  sheet(t?'Upravit převod':'Převod mezi účty',`<p class="p">Převod mezi vlastními účty se nepočítá do příjmů ani výdajů. Jen posune peníze a upraví zůstatky.</p>
+    <div class="amount-in"><input id="trAmt" inputmode="decimal" placeholder="0" value="${t?t.amount:''}" aria-label="Částka"><span>Kč</span></div>
+    <div class="grid2"><div class="field"><label for="trFrom">Z účtu</label><select id="trFrom">${accOpts(fromDef)}</select></div><div class="field"><label for="trTo">Na účet</label><select id="trTo">${accOpts(toDef)}</select></div></div>
+    <div class="grid2"><div class="field"><label for="trDate">Datum</label><input id="trDate" type="date" value="${t?t.date:today()}"></div><div class="field"><label for="trNote">Poznámka</label><input id="trNote" placeholder="nepovinné" value="${esc(t?.note||'')}"></div></div>
+    <div class="foot">${t?'<button class="btn danger" id="trDel">Smazat</button>':''}<button class="btn" id="trSave">${t?'Uložit':'Zapsat převod'}</button></div><div id="trConfirm"></div>`);
+  if(!t) setTimeout(()=>$('#trAmt')?.focus(),60);
+  $('#trSave').onclick=()=>{ const amount=parseAmt($('#trAmt').value), from=$('#trFrom').value, to=$('#trTo').value;
+    if(!(amount>0)){toast('Zadej částku.');return;} if(from===to){toast('Vyber dva různé účty.');return;}
+    ls.set('rb-trfrom',from); ls.set('rb-trto',to); const now=Date.now();
+    upsert('tx',{...(t||{}),id:t?.id||uid('p'),type:'prevod',cat:'prevod',who:'spol',from,to,amount:Math.round(amount*100)/100,date:$('#trDate').value||today(),note:$('#trNote').value.trim(),createdAt:t?.createdAt||now,changedAt:now,by:S.me||t?.by||null});
+    closeSheet(); toast(t?'Uloženo':'Převod zapsán'); render(); };
+  const del=$('#trDel'); if(del) del.onclick=()=>delConfirm('#trConfirm','Smazat tento převod?',()=>{ delItem('tx',t.id); render(); });
+}
+function doSettle(){ const owed=settlement(), N=names(); if(Math.abs(owed)<1) return; const from=owed>0?'b':'a', to=owed>0?'a':'b';
+  confirmSheet('Zapsat vyrovnání?',`${N[from]} pošle ${N[to]} ${kc(Math.abs(owed))}. Stav se tím vynuluje.`,'Zapsat',()=>{ const now=Date.now(); upsert('tx',{id:uid('v'),type:'vyrovnani',cat:'vyrovnani',date:today(),amount:Math.abs(owed),from,to,who:from,createdAt:now,changedAt:now,by:S.me||null}); toast('Vyrovnáno'); render(); }); }
+function openSettleEdit(t){ const N=names(); sheet('Vyrovnání',`<p class="p">${esc(N[t.from])} → ${esc(N[t.to])}: ${kc(t.amount)}, ${new Date(t.date+'T12:00').toLocaleDateString('cs-CZ')}</p><div class="foot"><button class="btn danger" id="vDel">Smazat vyrovnání</button></div><div id="vConfirm"></div>`); $('#vDel').onclick=()=>delConfirm('#vConfirm','Smazat toto vyrovnání?',()=>{ delItem('tx',t.id); render(); }); }
+
+/* ================= import CSV ================= */
+function readCsvFile(f){ return f.arrayBuffer().then(buf=>{ let txt=new TextDecoder('utf-8').decode(buf); if(txt.includes('\uFFFD')){ try{ txt=new TextDecoder('windows-1250').decode(buf); }catch(e){} } return txt; }); }
+function splitCsv(line,d){ const out=[]; let cur='',q=false; for(let i=0;i<line.length;i++){ const c=line[i]; if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; } else if(c==='"') q=true; else if(c===d){ out.push(cur); cur=''; } else cur+=c; } out.push(cur); return out.map(s=>s.trim()); }
+function parseDate(s){ s=(s||'').trim(); let m=s.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/); if(m) return m[3]+'-'+pad(m[2])+'-'+pad(m[1]); m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3]; return null; }
+const hash = s => { let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return (h>>>0).toString(36); };
+function parseBank(txt,who,accId){
+  const lines=txt.replace(/^﻿/,'').split(/\r?\n/).filter(l=>l.trim());
+  let hi=-1, d=';';
+  for(let i=0;i<Math.min(lines.length,40);i++){ const l=lines[i].toLowerCase(); if(l.includes('datum')&&(l.includes('objem')||l.includes('částka')||l.includes('castka')||l.includes('amount'))){ hi=i; d=(lines[i].split(';').length>=lines[i].split(',').length)?';':','; break; } }
+  if(hi<0) return {rows:[],dupes:0,err:'Nepoznal jsem formát. Potřebuju CSV se sloupci Datum a Objem nebo Částka.'};
+  const head=splitCsv(lines[hi],d).map(h=>h.toLowerCase().replace(/"/g,''));
+  const find=(...keys)=>{ for(const k of keys){ const i=head.findIndex(h=>h===k); if(i>=0) return i; } for(const k of keys){ const i=head.findIndex(h=>h.includes(k)); if(i>=0) return i; } return -1; };
+  const iDate=find('datum provedení','datum'), iAmt=find('objem','zaúčtovaná částka','částka','castka','amount');
+  const iNotes=[find('název protiúčtu','nazev protiuctu'),find('zpráva pro příjemce'),find('poznámka','poznamka'),find('zpráva','zprava'),find('obchodník','místo'),find('popis')].filter(i=>i>=0);
+  const iCp=find('protiúčet','číslo protiúčtu','protiucet','cislo protiuctu','účet protistrany');
+  const digits=x=>String(x||'').split('/')[0].replace(/\D/g,'').replace(/^0+/,'');
+  const own={}; D().accounts.forEach(a=>{ const dg=digits(a.number); if(dg) own[dg]=a.id; });
+  const existing=new Set(D().tx.map(t=>t.importId).filter(Boolean)); let dupes=0; const rows=[];
+  const fixUsed=new Set();
+  for(let i=hi+1;i<lines.length;i++){
+    const c=splitCsv(lines[i],d); const date=parseDate(c[iDate]); const amt=parseAmt((c[iAmt]||'').replace(/[^\d,.\-−]/g,'').replace('−','-'));
+    if(!date||!isFinite(amt)||!amt) continue;
+    const note=[...new Set(iNotes.map(j=>c[j]).filter(Boolean))].slice(0,2).join(' · ').slice(0,80);
+    const cpAcc=iCp>=0?own[digits(c[iCp])]:null;
+    if(accId && cpAcc && cpAcc!==accId){ const from=amt<0?accId:cpAcc, to=amt<0?cpAcc:accId, importId='imp-tr-'+hash(date+'|'+Math.abs(amt)+'|'+[from,to].join('>'));
+      if(existing.has(importId)){ dupes++; continue; } existing.add(importId);
+      const ff=D().fixed.find(f=>f.toAccount===to&&Math.abs(f.amount-Math.abs(amt))<0.5&&!fixDone(mkey(date),f));
+      rows.push({date,amount:Math.abs(amt),type:'prevod',cat:'prevod',from,to,note:note||'Převod',importId,who:'spol',fixedId:ff?ff.id:null,on:true}); continue; }
+    const importId='imp-'+hash(date+'|'+amt+'|'+note);
+    if(existing.has(importId)){ dupes++; continue; } existing.add(importId);
+    const type=amt>0?'prijem':'vydaj', amount=Math.abs(amt);
+    let cat=type==='prijem'?(amount>15000?'vyplata':'prijem-ostatni'):((guessCat(note)||{}).cat||'ostatni');
+    let fixedId=null; if(type==='vydaj'){ const f=D().fixed.find(f=>!fixUsed.has(f.id+mkey(date))&&Math.abs(f.amount-amount)<0.5&&!fixDone(mkey(date),f)); if(f){ fixedId=f.id; cat=f.cat; fixUsed.add(f.id+mkey(date)); } }
+    rows.push({date,amount,type,cat,note,importId,fixedId,who,account:accId,on:true});
+  }
+  return {rows,dupes};
+}
+function doImport(){ const now=Date.now(); const sel=S.imp.rows.filter(r=>r.on); sel.forEach(r=>{ const {on,...rest}=r; const rec={id:r.fixedId?fixTxId(mkey(r.date),{id:r.fixedId}):uid('t'),...rest,note:rest.note||'',createdAt:now,changedAt:now,by:S.me||null}; if(!rec.fixedId) delete rec.fixedId; upsert('tx',rec); }); save(); toast(`Importováno ${sel.length} ${pl(sel.length,'pohyb','pohyby','pohybů')}`); S.imp=null; render(); }
+
+async function copyCsv(){ const N=names(); const rows=[['datum','typ','kategorie','kdo','castka','poznamka','stitky','komentar']];
+  [...D().tx].filter(isTx).sort((a,b)=>a.date.localeCompare(b.date)).forEach(t=>rows.push([t.date,t.type==='prijem'?'příjem':'výdaj',(CAT[t.cat]||{}).n||t.cat,N[t.who]||t.who,String(t.amount).replace('.',','),t.note||'',(t.tags||[]).join(' '),t.comment||'']));
+  const csv=rows.map(r=>r.map(x=>/[;"\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x).join(';')).join('\n');
+  try{ await navigator.clipboard.writeText(csv); toast('CSV zkopírováno'); } catch(e){ const ta=$('#csvOut'); ta.hidden=false; ta.value=csv; ta.focus(); ta.select(); toast('Označeno, zkopíruj ručně'); } }
+
+let toastT;
+function toast(msg){ $('#toastRoot').innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toastT); toastT=setTimeout(()=>$('#toastRoot').innerHTML='',3200); }
+
+/* ================= identita ================= */
+function askWhoAmI(){ const N=names();
+  sheet('Kdo používá tenhle telefon?',`<p class="p">Appka pak druhému ukáže, co jsi nového zapsal. Změnit to jde ve Více → Nastavení.</p><div class="whoami"><button class="btn" data-me="a">${esc(N.a)}</button><button class="btn" data-me="b">${esc(N.b)}</button></div>`,true);
+  $$('[data-me]').forEach(b=>b.onclick=()=>{ setMe(b.dataset.me); closeSheet(); }); }
+function setMe(p){ S.me=p; ls.set('rb-me',p); render(); }
+
+/* ================= start ================= */
+async function start(){
+  S.me=ls.get('rb-me');
+  try{ if(CFG.url&&CFG.key&&window.supabase) sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'rb-auth'}}); }catch(e){ sb=null; }
+  let hh=null; try{ hh=JSON.parse(ls.get('rb-hh')||'null'); }catch(e){}
+  const key=hh?await idbGet('key'):null, token=hh?await idbGet('token'):null;
+  if(!sb||!hh||!key){ showOnboarding(); return; }
+  S.hh=hh; S.key=key; S.token=token;
+  if(!await loadCache()){ S.D=emptyData(); synced={}; lastSync=null; }
+  render(); if(!S.me) setTimeout(askWhoAmI,500);
+  await syncNow();
+  setInterval(()=>{ if(!document.hidden) syncNow(); },60000);
+}
+window.addEventListener('online',()=>syncNow());
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncNow(); });
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+$('#prevM').onclick=()=>{ S.month=shiftM(S.month,-1); render(); };
+$('#nextM').onclick=()=>{ S.month=shiftM(S.month,1); render(); };
+$('#fab').onclick=()=>{ if(S.tab==='plan'&&S.sub.plan==='cile') openGoal(); else if(S.tab==='plan'&&S.sub.plan==='velke') openSink(); else if(S.tab==='plan'&&S.sub.plan==='jmeni') openAcc(); else if(S.tab==='fixy') openFixed(); else openTx(); };
+$$('nav.tabs button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; render(); scrollTo(0,0); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('.whoami')) closeSheet(); });
+start();
+})();
+</script>
+</body>
+</html>

@@ -684,7 +684,8 @@ function settlement(){ // >0: B dluží A
   }); return Math.round(owed);
 }
 const sinkNeed = s => { const left=Math.max(1,monthsBetween(mkey(today()),s.due)); return Math.max(0,(s.amount-(s.saved||0)))/left; };
-const goalNeed = g => { if(!g.deadline||g.saved>=g.target) return 0; const left=monthsBetween(mkey(today()),g.deadline); return left>0?(g.target-g.saved)/left:0; };
+const goalLeft = g => { if(!g.deadline) return null; const cur=mkey(today()); return g.deadline===cur?1:monthsBetween(cur,g.deadline); };
+const goalNeed = g => { if(g.saved>=g.target) return 0; if(g.deadline){ const left=goalLeft(g); return left>0?(g.target-g.saved)/left:0; } return +g.monthly||0; };
 function accBalanceAt(a,date){
   const hs=(a.history||[]).filter(h=>h.d<=date); const anc=hs[hs.length-1]; if(!anc) return null; if(a.kind==='dluh') return anc.v;
   let v=anc.v; D().tx.forEach(t=>{ if(t.date<=anc.d||t.date>date) return;
@@ -1051,8 +1052,12 @@ function planGoals(){
   if(!g.length) h+=`<p class="p">Přidej cíl, třeba rezervu nebo rekonstrukci. S termínem spočítám, kolik odkládat měsíčně.</p>`;
   [...g].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(x=>{ const pct=x.target?Math.min(100,x.saved/x.target*100):0; let hint,hc='';
     if(x.saved>=x.target) hint='Hotovo, cíl je splněný.';
-    else if(x.deadline){ const left=monthsBetween(mkey(today()),x.deadline); if(left<=0){hint=`Termín ${mName(x.deadline)} ${x.deadline.slice(0,4)} už minul.`;hc='warn';} else hint=`Do ${mGen(x.deadline)} ${x.deadline.slice(0,4)} odkládat ${kc(goalNeed(x))} měsíčně (${left} ${pl(left,'měsíc','měsíce','měsíců')}).`; }
-    else hint=`Chybí ${kc(x.target-x.saved)}. Přidej termín a spočítám měsíční částku.`;
+    else if(x.deadline){ const left=goalLeft(x), need=goalNeed(x);
+      if(left<=0){hint=`Termín ${mName(x.deadline)} ${x.deadline.slice(0,4)} už minul. Chybí ${kc(x.target-x.saved)}.`;hc='warn';}
+      else { hint=`Do ${mGen(x.deadline)} ${x.deadline.slice(0,4)} odkládat <b class="num">${kc(need)}</b> měsíčně (${left} ${pl(left,'měsíc','měsíce','měsíců')}).`;
+        if(x.monthly>0){ if(x.monthly>=need-0.5) hint+=` Odkládáte ${kc(x.monthly)}, stihnete to.`; else { hint+=` Odkládáte ${kc(x.monthly)}, chybí ${kc(need-x.monthly)} měsíčně.`; hc='warn'; } } } }
+    else if(x.monthly>0){ const n=Math.ceil((x.target-x.saved)/x.monthly), end=shiftM(mkey(today()),n-1); hint=`Při ${kc(x.monthly)} měsíčně bude hotovo v ${mLoc(end)} ${end.slice(0,4)} (${n} ${pl(n,'měsíc','měsíce','měsíců')}).`; }
+    else { const rest=x.target-x.saved; hint=`Chybí ${kc(rest)}. Do kdy to chcete mít? Klepni a spočítám měsíční částku:<div class="btnrow" style="margin-top:8px">${[12,24,36].map(n=>`<button class="btn ghost sm" data-gquick="${esc(x.id)}:${n}">Za ${n/12} ${pl(n/12,'rok','roky','let')} · ${kc(Math.ceil(rest/n))}/měs.</button>`).join('')}</div>`; }
     h+=`<div class="goal"><div class="t"><b>${esc(x.name)}</b><span class="num muted">${Math.round(pct)} %</span></div><div class="bar" style="height:10px"><i style="width:${pct}%;background:var(--accent)"></i></div><div class="t num"><span>${kc(x.saved)}</span><span class="muted">z ${kc(x.target)}</span></div><div class="hint ${hc}">${hint}</div><div class="acts"><button class="btn" data-dep="goals:${esc(x.id)}">Připsat částku</button><button class="btn ghost" data-goal="${esc(x.id)}">Upravit</button></div></div>`; });
   return h+`<button class="btn ghost wide mt" data-act="newgoal">Nový cíl</button></section>`;
 }
@@ -1226,6 +1231,7 @@ function bindMain(){
   on('[data-dep]',b=>{ const [c,id]=b.dataset.dep.split(':'); openDeposit(c,D()[c].find(x=>x.id===id)); });
   on('[data-goal]',b=>openGoal(D().goals.find(g=>g.id===b.dataset.goal)));
   on('[data-act="newgoal"]',()=>openGoal());
+  on('[data-gquick]',b=>{ const [id,n]=b.dataset.gquick.split(':'); const g=D().goals.find(x=>x.id===id); if(!g) return; upsert('goals',{...g,deadline:shiftM(mkey(today()),+n)}); toast('Termín nastaven, upravíš ho přes Upravit'); render(); });
   on('[data-sink]',b=>openSink(D().sinking.find(s=>s.id===b.dataset.sink)));
   on('[data-act="newsink"]',()=>openSink());
   on('[data-acc]',b=>openAcc(D().accounts.find(a=>a.id===b.dataset.acc)));
@@ -1417,10 +1423,11 @@ function openGoal(g){
   const isNew=!g;
   sheet(isNew?'Nový cíl':'Upravit cíl',`<div class="field"><label for="gName">Název</label><input id="gName" placeholder="např. Rekonstrukce bytu" value="${esc(g?.name||'')}"></div>
     <div class="grid2"><div class="field"><label for="gTarget">Cílová částka (Kč)</label><input id="gTarget" inputmode="numeric" value="${g?g.target:''}"></div><div class="field"><label for="gSaved">Už našetřeno (Kč)</label><input id="gSaved" inputmode="numeric" value="${g?g.saved:'0'}"></div></div>
-    <div class="field"><label for="gDead">Termín (nepovinné)</label><input id="gDead" type="month" value="${esc(g?.deadline||'')}"></div>
+    <div class="grid2"><div class="field"><label for="gDead">Do kdy (nepovinné)</label><input id="gDead" type="month" value="${esc(g?.deadline||'')}"></div><div class="field"><label for="gMonthly">Měsíčně odkládáme</label><input id="gMonthly" inputmode="numeric" placeholder="nepovinné" value="${g&&g.monthly?g.monthly:''}"></div></div>
+    <p class="muted" style="font-size:.82rem;margin:-6px 0 12px">Vyplň termín, nebo kolik měsíčně odkládáte. Appka dopočítá zbytek. Když vyplníš obojí, ohlídá, jestli to stihnete.</p>
     <div class="foot">${isNew?'':'<button class="btn danger" id="gDel">Smazat</button>'}<button class="btn" id="gSave">Uložit cíl</button></div><div id="gConfirm"></div>`);
   $('#gSave').onclick=()=>{ const name=$('#gName').value.trim(), target=parseAmt($('#gTarget').value), saved=parseAmt($('#gSaved').value)||0; if(!name){toast('Cíl potřebuje název.');return;} if(!(target>0)){toast('Zadej cílovou částku.');return;}
-    upsert('goals',{id:g?.id||uid('g'),name,target,saved:Math.max(0,saved),deadline:$('#gDead').value||'',createdAt:g?.createdAt||Date.now()}); closeSheet(); toast('Cíl uložen'); render(); };
+    const mo=parseAmt($('#gMonthly').value); upsert('goals',{id:g?.id||uid('g'),name,target,saved:Math.max(0,saved),deadline:$('#gDead').value||'',monthly:mo>0?Math.round(mo):null,createdAt:g?.createdAt||Date.now()}); closeSheet(); toast('Cíl uložen'); render(); };
   const del=$('#gDel'); if(del) del.onclick=()=>delConfirm('#gConfirm',`Smazat cíl „${g.name}“?`,()=>{ delItem('goals',g.id); toast('Cíl smazán'); render(); });
 }
 function openSink(s){
@@ -1438,7 +1445,7 @@ function openDeposit(col,g){
   const isGoal=col==='goals', target=isGoal?g.target:g.amount;
   sheet(isGoal?'Připsat k cíli':'Odložit na velký výdaj',`<p class="muted" style="margin:-6px 0 12px">${esc(g.name)} · ${kc(g.saved||0)} z ${kc(target)}</p>
     <div class="seg" id="depSeg"><button data-v="1" aria-pressed="true">Přidat</button><button data-v="-1" aria-pressed="false">Vybrat</button></div>
-    <div class="amount-in"><input id="depAmt" inputmode="decimal" placeholder="0" aria-label="Částka" value="${isGoal?'':Math.round(sinkNeed(g))||''}"><span>Kč</span></div>
+    <div class="amount-in"><input id="depAmt" inputmode="decimal" placeholder="0" aria-label="Částka" value="${isGoal?(Math.round(goalNeed(g))||''):Math.round(sinkNeed(g))||''}"><span>Kč</span></div>
     ${!isGoal&&g.account?`<label class="checkrow" style="margin:-4px 0 8px"><input type="checkbox" id="depTr" checked> Zapsat i převod na ${esc(accName(g.account))}</label><div class="field" id="depFromF"><label for="depFrom">Z účtu</label><select id="depFrom">${accOpts(ls.get('rb-trfrom')||defAcc(),a=>a.kind!=='dluh'&&a.id!==g.account)}</select></div>`:''}
     <div class="foot"><button class="btn" id="depSave">Uložit</button></div>`);
   const dt=$('#depTr'); if(dt) dt.onchange=()=>{ $('#depFromF').hidden=!dt.checked; };
